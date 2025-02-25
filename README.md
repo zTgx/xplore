@@ -5,14 +5,13 @@
 # xplore   
 A brand new Twitter/X client in Rust
 
+![Version](https://img.shields.io/crates/v/xplore)
 ![Crates Downloads](https://img.shields.io/crates/d/xplore?logo=rust)
 ![GitHub License](https://img.shields.io/github/license/solagent-rs/xplore)
 
 </div>
 
-</br>
 
-A Rust library that provides a scraper interface for the Twitter API. Easily interact with Twitter through authentication, timeline fetching, user operations, and more.
 
 ## Features
 - Authentication with cookies
