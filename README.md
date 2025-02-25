@@ -44,6 +44,4 @@ We welcome contributions! Please feel free to submit a Pull Request.
 
 ## Star History
 
-## Star History
-
 [![Star History Chart](https://api.star-history.com/svg?repos=solagent-rs/xplore&type=Date)](https://star-history.com/#solagent-rs/xplore&Date)
