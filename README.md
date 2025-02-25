@@ -6,7 +6,7 @@
 A brand new Twitter/X client in Rust
 
 ![Crates Downloads](https://img.shields.io/crates/d/xplore?logo=rust)
-![GitHub License](https://img.shields.io/github/license/zTgx/xplore)
+![GitHub License](https://img.shields.io/github/license/solagent-rs/xplore)
 
 </div>
 
@@ -41,3 +41,7 @@ MIT
 ## Contributing
 
 We welcome contributions! Please feel free to submit a Pull Request.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=solagent/solagent,solagent-rs/xplore&type=Date)](https://star-history.com/#solagent/solagent&solagent-rs/xplore&Date)
