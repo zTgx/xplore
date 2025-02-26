@@ -11,7 +11,7 @@ A brand new Twitter/X client in Rust
 
 </div>
 
-
+>> The project is still in the early development stage. PRs are welcome. 
 
 ## Features
 - Authentication with cookies
