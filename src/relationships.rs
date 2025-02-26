@@ -5,6 +5,7 @@ use crate::primitives::Profile;
 use crate::primitives::RelationshipTimeline;
 use crate::primitives::TimelineInstruction;
 use crate::timeline::v1::QueryProfilesResponse;
+use crate::IProfile;
 use crate::XploreX;
 use chrono::{DateTime, Utc};
 use reqwest::Method;

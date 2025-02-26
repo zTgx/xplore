@@ -2,7 +2,8 @@ use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profile {
@@ -71,7 +72,8 @@ pub struct ExpandedUrl {
 }
 
 lazy_static! {
-    pub static ref ID_CACHE: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+    pub static ref ID_CACHE: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

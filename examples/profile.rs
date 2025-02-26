@@ -1,4 +1,4 @@
-use xplore::XploreX;
+use xplore::{IProfile, XploreX};
 
 #[tokio::main]
 async fn main() {

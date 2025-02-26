@@ -1,9 +1,11 @@
+use async_trait::async_trait;
 use auth::user_auth::{TwitterAuth, TwitterUserAuth};
 use dotenv::dotenv;
-use primitives::BEARER_TOKEN;
+use primitives::{Profile, BEARER_TOKEN};
 use reqwest::Client;
 use std::env;
 use std::time::Duration;
+use crate::error::Result;
 
 pub mod api;
 pub mod auth;
@@ -14,6 +16,13 @@ pub mod relationships;
 pub mod search;
 pub mod timeline;
 pub mod tweets;
+
+#[async_trait]
+pub trait IProfile {
+    async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile>;
+    async fn get_screen_name_by_user_id(&self, user_id: &str) -> Result<String>;
+    async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String>;
+}
 
 pub struct XploreX {
     pub client: Client,
