@@ -1,5 +1,4 @@
 use crate::api::requests::request_api;
-use crate::auth::user_auth::TwitterAuth;
 use crate::error::{Result, TwitterError};
 use crate::primitives::constants::{URL_USER_BY_REST_ID, URL_USER_BY_SCREEN_NAME};
 use crate::primitives::profile::*;

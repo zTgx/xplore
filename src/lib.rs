@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use auth::user_auth::TwitterUserAuth;
+use auth::UserAuth;
 use primitives::Profile;
 use reqwest::Client;
 use crate::error::Result;
@@ -21,9 +21,10 @@ pub trait IProfile {
     async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String>;
 }
 
+#[derive(Clone)]
 pub struct XploreX {
     pub client: Client,
-    pub auth: TwitterUserAuth,
+    pub auth: UserAuth,
 }
 
 impl XploreX {
@@ -41,7 +42,7 @@ impl XploreX {
 mod xplore_utils {
     use reqwest::Client;
     use std::time::Duration;
-    use crate::{auth::user_auth::TwitterUserAuth, error::{Result, TwitterError}};
+    use crate::{auth::UserAuth, error::{Result, TwitterError}};
 
     pub fn client() -> Result<Client> {
         Client::builder()
@@ -53,8 +54,8 @@ mod xplore_utils {
         })
     }
 
-    pub async fn make_auth(cookie: &str) -> Result<TwitterUserAuth> {
-        let mut auth = TwitterUserAuth::new()
+    pub async fn make_auth(cookie: &str) -> Result<UserAuth> {
+        let mut auth = UserAuth::new()
             .await?;
 
         auth.set_from_cookie_string(cookie)

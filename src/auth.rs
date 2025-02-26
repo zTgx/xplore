@@ -1,14 +1,11 @@
 use crate::api::requests::request_api;
 use crate::error::{Result, TwitterError};
-use crate::primitives::BEARER_TOKEN;
-use async_trait::async_trait;
+use crate::primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN};
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::any::Any;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
@@ -17,77 +14,15 @@ use tokio::sync::Mutex;
 use totp_rs::{Algorithm, TOTP};
 use tracing;
 
-#[derive(Debug)]
-enum SubtaskType {
-    LoginJsInstrumentation,
-    LoginEnterUserIdentifier,
-    LoginEnterPassword,
-    LoginAcid,
-    AccountDuplicationCheck,
-    LoginTwoFactorAuthChallenge,
-    LoginEnterAlternateIdentifier,
-    LoginSuccess,
-    DenyLogin,
-    Unknown(String),
-}
-
-impl From<&str> for SubtaskType {
-    fn from(s: &str) -> Self {
-        match s {
-            "LoginJsInstrumentationSubtask" => Self::LoginJsInstrumentation,
-            "LoginEnterUserIdentifierSSO" => Self::LoginEnterUserIdentifier,
-            "LoginEnterPassword" => Self::LoginEnterPassword,
-            "LoginAcid" => Self::LoginAcid,
-            "AccountDuplicationCheck" => Self::AccountDuplicationCheck,
-            "LoginTwoFactorAuthChallenge" => Self::LoginTwoFactorAuthChallenge,
-            "LoginEnterAlternateIdentifierSubtask" => Self::LoginEnterAlternateIdentifier,
-            "LoginSuccessSubtask" => Self::LoginSuccess,
-            "DenyLoginSubtask" => Self::DenyLogin,
-            other => Self::Unknown(other.to_string()),
-        }
-    }
-}
-
-#[async_trait]
-pub trait TwitterAuth: Send + Sync + Any {
-    async fn install_headers(&self, headers: &mut HeaderMap) -> Result<()>;
-    async fn get_cookies(&self) -> Result<Vec<cookie::Cookie<'_>>>;
-    fn delete_token(&mut self);
-    fn as_any(&self) -> &dyn Any;
-}
-
-#[derive(Debug, Serialize)]
-struct FlowInitRequest {
-    flow_name: String,
-    input_flow_data: serde_json::Value,
-}
-
-#[derive(Debug, Serialize)]
-struct FlowTaskRequest {
-    flow_token: String,
-    subtask_inputs: Vec<serde_json::Value>,
-}
-
-#[derive(Debug, Deserialize)]
-struct FlowResponse {
-    flow_token: String,
-    subtasks: Option<Vec<Subtask>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct Subtask {
-    subtask_id: String,
-}
-
 #[derive(Clone)]
-pub struct TwitterUserAuth {
+pub struct UserAuth {
     bearer_token: String,
     guest_token: Option<String>,
     cookie_jar: Arc<Mutex<CookieJar>>,
     created_at: Option<DateTime<Utc>>,
 }
 
-impl TwitterUserAuth {
+impl UserAuth {
     pub async fn new() -> Result<Self> {
         Ok(Self {
             bearer_token: BEARER_TOKEN.to_string(),
@@ -593,9 +528,8 @@ impl TwitterUserAuth {
     }
 }
 
-#[async_trait]
-impl TwitterAuth for TwitterUserAuth {
-    async fn install_headers(&self, headers: &mut HeaderMap) -> Result<()> {
+impl UserAuth {
+    pub async fn install_headers(&self, headers: &mut HeaderMap) -> Result<()> {
         let cookie_jar = self.cookie_jar.lock().await;
         let cookies: Vec<_> = cookie_jar.iter().collect();
         if !cookies.is_empty() {
@@ -640,17 +574,13 @@ impl TwitterAuth for TwitterUserAuth {
         Ok(())
     }
 
-    async fn get_cookies(&self) -> Result<Vec<cookie::Cookie<'_>>> {
+    pub async fn get_cookies(&self) -> Result<Vec<cookie::Cookie<'_>>> {
         let jar = self.cookie_jar.lock().await;
         Ok(jar.iter().map(|c| c.to_owned()).collect())
     }
 
-    fn delete_token(&mut self) {
+    pub fn delete_token(&mut self) {
         self.guest_token = None;
         self.created_at = None;
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
     }
 }

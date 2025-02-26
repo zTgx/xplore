@@ -9,3 +9,6 @@ pub use constants::BEARER_TOKEN;
 
 mod rel;
 pub use rel::*;
+
+mod auth;
+pub use auth::*;

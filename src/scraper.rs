@@ -1,5 +1,5 @@
 use crate::api::client::Xplore;
-use crate::auth::user_auth::TwitterUserAuth;
+use crate::auth::user_auth::UserAuth;
 use crate::primitives::constants::BEARER_TOKEN;
 use crate::error::Result;
 use crate::error::TwitterError;
@@ -15,7 +15,7 @@ pub struct Scraper {
 
 impl Scraper {
     pub async fn new() -> Result<Self> {
-        let auth = Box::new(TwitterUserAuth::new(BEARER_TOKEN.to_string()).await?);
+        let auth = Box::new(UserAuth::new(BEARER_TOKEN.to_string()).await?);
         let twitter_client = Xplore::new(auth.clone())?;
         Ok(Self { twitter_client })
     }
@@ -27,7 +27,7 @@ impl Scraper {
         email: Option<String>,
         two_factor_secret: Option<String>,
     ) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
             let mut auth = user_auth.clone();
             auth.login(
                 &self.twitter_client.client,
@@ -67,7 +67,7 @@ impl Scraper {
     }
 
     pub async fn save_cookies(&self, cookie_file: &str) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
             user_auth.save_cookies_to_file(cookie_file).await
         } else {
             Err(TwitterError::Auth("Invalid auth type".into()))
@@ -75,7 +75,7 @@ impl Scraper {
     }
 
     pub async fn get_cookie_string(&self) -> Result<String> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
             user_auth.get_cookie_string().await
         } else {
             Err(TwitterError::Auth("Invalid auth type".into()))
@@ -83,7 +83,7 @@ impl Scraper {
     }
 
     pub async fn set_cookies(&mut self, json_str: &str) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
             let mut auth = user_auth.clone();
             auth.set_cookies(json_str).await?;
 
@@ -96,7 +96,7 @@ impl Scraper {
     }
 
     pub async fn set_from_cookie_string(&mut self, cookie_string: &str) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
             let mut auth = user_auth.clone();
             auth.set_from_cookie_string(cookie_string).await?;
 

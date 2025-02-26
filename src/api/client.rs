@@ -1,4 +1,4 @@
-use crate::auth::user_auth::TwitterAuth;
+use crate::auth::UserAuth;
 use crate::error::{Result, TwitterError};
 use crate::primitives::Tweet;
 use reqwest::{Client, Method};
@@ -7,11 +7,11 @@ use std::time::Duration;
 
 pub struct Xplore {
     pub client: Client,
-    pub auth: Box<dyn TwitterAuth + Send + Sync>,
+    pub auth: UserAuth
 }
 
 impl Xplore {
-    pub fn new(auth: Box<dyn TwitterAuth + Send + Sync>) -> Result<Self> {
+    pub fn new(auth: UserAuth) -> Result<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
             .cookie_store(true)
