@@ -196,16 +196,9 @@ pub struct SearchEntryItemInnerRaw {
     pub content: Option<TimelineEntryItemContentRaw>,
 }
 
-pub fn parse_legacy_tweet(
-    user: Option<&LegacyUserRaw>,
-    tweet: Option<&LegacyTweetRaw>,
-) -> Result<Tweet> {
-    let tweet = tweet.ok_or(TwitterError::Api(
-        "Tweet was not found in the timeline object".into(),
-    ))?;
-    let user = user.ok_or(TwitterError::Api(
-        "User was not found in the timeline object".into(),
-    ))?;
+pub fn parse_legacy_tweet(user: Option<&LegacyUserRaw>, tweet: Option<&LegacyTweetRaw>) -> Result<Tweet> {
+    let tweet = tweet.ok_or(TwitterError::Api("Tweet was not found in the timeline object".into()))?;
+    let user = user.ok_or(TwitterError::Api("User was not found in the timeline object".into()))?;
 
     let id_str = tweet
         .id_str
@@ -324,11 +317,7 @@ pub fn parse_timeline_entry_item_content_raw(
     _entry_id: &str,
     is_conversation: bool,
 ) -> Option<Tweet> {
-    let result = content
-        .tweet_results
-        .as_ref()
-        .or(content.tweet_result.as_ref())
-        .and_then(|r| r.result.as_ref())?;
+    let result = content.tweet_results.as_ref().or(content.tweet_result.as_ref()).and_then(|r| r.result.as_ref())?;
 
     let tweet_result = parse_result(result);
     if tweet_result.success {
@@ -350,8 +339,7 @@ pub fn parse_and_push(
     entry_id: String,
     is_conversation: bool,
 ) {
-    if let Some(tweet) = parse_timeline_entry_item_content_raw(content, &entry_id, is_conversation)
-    {
+    if let Some(tweet) = parse_timeline_entry_item_content_raw(content, &entry_id, is_conversation) {
         tweets.push(tweet);
     }
 }
@@ -369,22 +357,11 @@ pub fn parse_result(result: &TimelineResultRaw) -> ParseTweetResult {
 
     let mut tweet = match tweet_result {
         Ok(tweet) => tweet,
-        Err(e) => {
-            return ParseTweetResult {
-                success: false,
-                tweet: None,
-                err: Some(e),
-            }
-        }
+        Err(e) => return ParseTweetResult { success: false, tweet: None, err: Some(e) },
     };
 
     if tweet.views.is_none() {
-        if let Some(count) = result
-            .views
-            .as_ref()
-            .and_then(|v| v.count.as_ref())
-            .and_then(|c| c.parse().ok())
-        {
+        if let Some(count) = result.views.as_ref().and_then(|v| v.count.as_ref()).and_then(|c| c.parse().ok()) {
             tweet.views = Some(count);
         }
     }
@@ -398,11 +375,7 @@ pub fn parse_result(result: &TimelineResultRaw) -> ParseTweetResult {
         }
     }
 
-    ParseTweetResult {
-        success: true,
-        tweet: Some(tweet),
-        err: None,
-    }
+    ParseTweetResult { success: true, tweet: Some(tweet), err: None }
 }
 
 pub struct ParseTweetResult {
@@ -436,13 +409,10 @@ pub fn parse_timeline_tweets_v2(timeline: &TimelineV2) -> QueryTweetsResponse {
     let expected_entry_types = ["tweet-", "profile-conversation-"];
 
     for instruction in instructions {
-        let entries = instruction.entries.as_deref().unwrap_or_else(|| {
-            instruction
-                .entry
-                .as_ref()
-                .map(std::slice::from_ref)
-                .unwrap_or_default()
-        });
+        let entries = instruction
+            .entries
+            .as_deref()
+            .unwrap_or_else(|| instruction.entry.as_ref().map(std::slice::from_ref).unwrap_or_default());
 
         for entry in entries {
             let content = match &entry.content {
@@ -468,10 +438,7 @@ pub fn parse_timeline_tweets_v2(timeline: &TimelineV2) -> QueryTweetsResponse {
                 Some(id) => id,
                 None => continue,
             };
-            if !expected_entry_types
-                .iter()
-                .any(|prefix| entry_id.starts_with(prefix))
-            {
+            if !expected_entry_types.iter().any(|prefix| entry_id.starts_with(prefix)) {
                 continue;
             }
 
@@ -491,11 +458,7 @@ pub fn parse_timeline_tweets_v2(timeline: &TimelineV2) -> QueryTweetsResponse {
         }
     }
 
-    QueryTweetsResponse {
-        tweets,
-        next: bottom_cursor,
-        previous: top_cursor,
-    }
+    QueryTweetsResponse { tweets, next: bottom_cursor, previous: top_cursor }
 }
 
 pub fn parse_threaded_conversation(conversation: &ThreadedConversation) -> Option<Tweet> {
@@ -560,11 +523,7 @@ pub fn parse_threaded_conversation(conversation: &ThreadedConversation) -> Optio
         }
 
         if main_tweet.is_self_thread == Some(true) {
-            let thread = replies
-                .iter()
-                .filter(|t| t.is_self_thread == Some(true))
-                .cloned()
-                .collect::<Vec<_>>();
+            let thread = replies.iter().filter(|t| t.is_self_thread == Some(true)).cloned().collect::<Vec<_>>();
 
             if thread.is_empty() {
                 main_tweet.is_self_thread = Some(false);

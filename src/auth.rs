@@ -1,5 +1,5 @@
-use crate::api::requests::request_api;
 use crate::error::{Result, TwitterError};
+use crate::http::requests::request_api;
 use crate::primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN};
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
@@ -62,11 +62,7 @@ impl UserAuth {
         Ok(response)
     }
 
-    async fn execute_flow_task(
-        &self,
-        client: &Client,
-        request: FlowTaskRequest,
-    ) -> Result<FlowResponse> {
+    async fn execute_flow_task(&self, client: &Client, request: FlowTaskRequest) -> Result<FlowResponse> {
         let mut headers = HeaderMap::new();
         self.install_headers(&mut headers).await?;
 
@@ -112,54 +108,37 @@ impl UserAuth {
             if let Some(subtask) = subtasks.first() {
                 flow_response = match SubtaskType::from(subtask.subtask_id.as_str()) {
                     SubtaskType::LoginJsInstrumentation => {
-                        self.handle_js_instrumentation_subtask(client, flow_token)
-                            .await?
+                        self.handle_js_instrumentation_subtask(client, flow_token).await?
                     }
                     SubtaskType::LoginEnterUserIdentifier => {
-                        self.handle_username_input(client, flow_token, username)
-                            .await?
+                        self.handle_username_input(client, flow_token, username).await?
                     }
-                    SubtaskType::LoginEnterPassword => {
-                        self.handle_password_input(client, flow_token, password)
-                            .await?
-                    }
+                    SubtaskType::LoginEnterPassword => self.handle_password_input(client, flow_token, password).await?,
                     SubtaskType::LoginAcid => {
                         if let Some(email_str) = email {
-                            self.handle_email_verification(client, flow_token, email_str)
-                                .await?
+                            self.handle_email_verification(client, flow_token, email_str).await?
                         } else {
-                            return Err(TwitterError::Auth(
-                                "Email required for verification".into(),
-                            ));
+                            return Err(TwitterError::Auth("Email required for verification".into()));
                         }
                     }
                     SubtaskType::AccountDuplicationCheck => {
-                        self.handle_account_duplication_check(client, flow_token)
-                            .await?
+                        self.handle_account_duplication_check(client, flow_token).await?
                     }
                     SubtaskType::LoginTwoFactorAuthChallenge => {
                         if let Some(secret) = two_factor_secret {
-                            self.handle_two_factor_auth(client, flow_token, secret)
-                                .await?
+                            self.handle_two_factor_auth(client, flow_token, secret).await?
                         } else {
-                            return Err(TwitterError::Auth(
-                                "Two factor authentication required".into(),
-                            ));
+                            return Err(TwitterError::Auth("Two factor authentication required".into()));
                         }
                     }
                     SubtaskType::LoginEnterAlternateIdentifier => {
                         if let Some(email_str) = email {
-                            self.handle_alternate_identifier(client, flow_token, email_str)
-                                .await?
+                            self.handle_alternate_identifier(client, flow_token, email_str).await?
                         } else {
-                            return Err(TwitterError::Auth(
-                                "Email required for alternate identifier".into(),
-                            ));
+                            return Err(TwitterError::Auth("Email required for alternate identifier".into()));
                         }
                     }
-                    SubtaskType::LoginSuccess => {
-                        self.handle_success_subtask(client, flow_token).await?
-                    }
+                    SubtaskType::LoginSuccess => self.handle_success_subtask(client, flow_token).await?,
                     SubtaskType::DenyLogin => {
                         return Err(TwitterError::Auth("Login denied".into()));
                     }
@@ -176,11 +155,7 @@ impl UserAuth {
         Ok(())
     }
 
-    async fn handle_js_instrumentation_subtask(
-        &self,
-        client: &Client,
-        flow_token: String,
-    ) -> Result<FlowResponse> {
+    async fn handle_js_instrumentation_subtask(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -194,12 +169,7 @@ impl UserAuth {
         self.execute_flow_task(client, request).await
     }
 
-    async fn handle_username_input(
-        &self,
-        client: &Client,
-        flow_token: String,
-        username: &str,
-    ) -> Result<FlowResponse> {
+    async fn handle_username_input(&self, client: &Client, flow_token: String, username: &str) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -222,12 +192,7 @@ impl UserAuth {
         self.execute_flow_task(client, request).await
     }
 
-    async fn handle_password_input(
-        &self,
-        client: &Client,
-        flow_token: String,
-        password: &str,
-    ) -> Result<FlowResponse> {
+    async fn handle_password_input(&self, client: &Client, flow_token: String, password: &str) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -260,11 +225,7 @@ impl UserAuth {
         self.execute_flow_task(client, request).await
     }
 
-    async fn handle_account_duplication_check(
-        &self,
-        client: &Client,
-        flow_token: String,
-    ) -> Result<FlowResponse> {
+    async fn handle_account_duplication_check(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -277,18 +238,12 @@ impl UserAuth {
         self.execute_flow_task(client, request).await
     }
 
-    async fn handle_two_factor_auth(
-        &self,
-        client: &Client,
-        flow_token: String,
-        secret: &str,
-    ) -> Result<FlowResponse> {
+    async fn handle_two_factor_auth(&self, client: &Client, flow_token: String, secret: &str) -> Result<FlowResponse> {
         let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret.as_bytes().to_vec())
             .map_err(|e| TwitterError::Auth(format!("Failed to create TOTP: {}", e)))?;
 
-        let code = totp
-            .generate_current()
-            .map_err(|e| TwitterError::Auth(format!("Failed to generate TOTP code: {}", e)))?;
+        let code =
+            totp.generate_current().map_err(|e| TwitterError::Auth(format!("Failed to generate TOTP code: {}", e)))?;
 
         let request = FlowTaskRequest {
             flow_token,
@@ -322,15 +277,8 @@ impl UserAuth {
         self.execute_flow_task(client, request).await
     }
 
-    async fn handle_success_subtask(
-        &self,
-        client: &Client,
-        flow_token: String,
-    ) -> Result<FlowResponse> {
-        let request = FlowTaskRequest {
-            flow_token,
-            subtask_inputs: vec![],
-        };
+    async fn handle_success_subtask(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
+        let request = FlowTaskRequest { flow_token, subtask_inputs: vec![] };
         self.execute_flow_task(client, request).await
     }
 
@@ -344,9 +292,7 @@ impl UserAuth {
                 .map_err(|e| TwitterError::Auth(e.to_string()))?,
         );
 
-        let (response, _) =
-            request_api::<serde_json::Value>(client, url, headers, reqwest::Method::POST, None)
-                .await?;
+        let (response, _) = request_api::<serde_json::Value>(client, url, headers, reqwest::Method::POST, None).await?;
 
         let guest_token = response
             .get("guest_token")
@@ -380,10 +326,8 @@ impl UserAuth {
         let cookie_jar = self.cookie_jar.lock().await;
         let cookies: Vec<_> = cookie_jar.iter().collect();
 
-        let cookie_data: Vec<(String, String)> = cookies
-            .iter()
-            .map(|cookie| (cookie.name().to_string(), cookie.value().to_string()))
-            .collect();
+        let cookie_data: Vec<(String, String)> =
+            cookies.iter().map(|cookie| (cookie.name().to_string(), cookie.value().to_string())).collect();
 
         let json = serde_json::to_string_pretty(&cookie_data)
             .map_err(|e| TwitterError::Cookie(format!("Failed to serialize cookies: {}", e)))?;
@@ -395,8 +339,7 @@ impl UserAuth {
             .open(file_path)
             .map_err(|e| TwitterError::Cookie(format!("Failed to open cookie file: {}", e)))?;
 
-        file.write_all(json.as_bytes())
-            .map_err(|e| TwitterError::Cookie(format!("Failed to write cookies: {}", e)))?;
+        file.write_all(json.as_bytes()).map_err(|e| TwitterError::Cookie(format!("Failed to write cookies: {}", e)))?;
 
         Ok(())
     }
@@ -407,8 +350,8 @@ impl UserAuth {
         if !Path::new(file_path).exists() {
             return Err(TwitterError::Cookie("Cookie file does not exist".into()));
         }
-        let mut file = File::open(file_path)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to open cookie file: {}", e)))?;
+        let mut file =
+            File::open(file_path).map_err(|e| TwitterError::Cookie(format!("Failed to open cookie file: {}", e)))?;
 
         let mut contents = String::new();
         file.read_to_string(&mut contents)
@@ -440,11 +383,8 @@ impl UserAuth {
         let cookie_jar = self.cookie_jar.lock().await;
         let cookies: Vec<_> = cookie_jar.iter().collect();
 
-        let cookie_string = cookies
-            .iter()
-            .map(|c| format!("{}={}", c.name(), c.value()))
-            .collect::<Vec<_>>()
-            .join("; ");
+        let cookie_string =
+            cookies.iter().map(|c| format!("{}={}", c.name(), c.value())).collect::<Vec<_>>().join("; ");
 
         Ok(cookie_string)
     }
@@ -478,23 +418,20 @@ impl UserAuth {
         for cookie_str in cookie_string.split(';') {
             let cookie_str = cookie_str.trim();
             if let Ok(cookie) = cookie::Cookie::parse(cookie_str) {
-                let cookie =
-                    cookie::Cookie::build(cookie.name().to_string(), cookie.value().to_string())
-                        .path("/")
-                        .domain("twitter.com")
-                        .secure(true)
-                        .http_only(true)
-                        .finish();
+                let cookie = cookie::Cookie::build(cookie.name().to_string(), cookie.value().to_string())
+                    .path("/")
+                    .domain("twitter.com")
+                    .secure(true)
+                    .http_only(true)
+                    .finish();
                 cookie_jar.add(cookie.into_owned());
             }
         }
-        let has_essential_cookies = cookie_jar.iter().any(|c| c.name() == "ct0")
-            && cookie_jar.iter().any(|c| c.name() == "auth_token");
+        let has_essential_cookies =
+            cookie_jar.iter().any(|c| c.name() == "ct0") && cookie_jar.iter().any(|c| c.name() == "auth_token");
 
         if !has_essential_cookies {
-            return Err(TwitterError::Cookie(
-                "Missing essential cookies (ct0 or auth_token)".into(),
-            ));
+            return Err(TwitterError::Cookie("Missing essential cookies (ct0 or auth_token)".into()));
         }
         Ok(())
     }
@@ -533,23 +470,18 @@ impl UserAuth {
         let cookie_jar = self.cookie_jar.lock().await;
         let cookies: Vec<_> = cookie_jar.iter().collect();
         if !cookies.is_empty() {
-            let cookie_header = cookies
-                .iter()
-                .map(|c| format!("{}={}", c.name(), c.value()))
-                .collect::<Vec<_>>()
-                .join("; ");
+            let cookie_header =
+                cookies.iter().map(|c| format!("{}={}", c.name(), c.value())).collect::<Vec<_>>().join("; ");
 
             headers.insert(
                 "Cookie",
-                HeaderValue::from_str(&cookie_header)
-                    .map_err(|e| TwitterError::Auth(e.to_string()))?,
+                HeaderValue::from_str(&cookie_header).map_err(|e| TwitterError::Auth(e.to_string()))?,
             );
 
             if let Some(csrf_cookie) = cookies.iter().find(|c| c.name() == "ct0") {
                 headers.insert(
                     "x-csrf-token",
-                    HeaderValue::from_str(csrf_cookie.value())
-                        .map_err(|e| TwitterError::Auth(e.to_string()))?,
+                    HeaderValue::from_str(csrf_cookie.value()).map_err(|e| TwitterError::Auth(e.to_string()))?,
                 );
             }
         }
@@ -559,17 +491,12 @@ impl UserAuth {
                 .map_err(|e| TwitterError::Auth(e.to_string()))?,
         );
         if let Some(token) = &self.guest_token {
-            headers.insert(
-                "x-guest-token",
-                HeaderValue::from_str(token).map_err(|e| TwitterError::Auth(e.to_string()))?,
-            );
+            headers
+                .insert("x-guest-token", HeaderValue::from_str(token).map_err(|e| TwitterError::Auth(e.to_string()))?);
         }
         headers.insert("x-twitter-active-user", HeaderValue::from_static("yes"));
         headers.insert("x-twitter-client-language", HeaderValue::from_static("en"));
-        headers.insert(
-            "x-twitter-auth-type",
-            HeaderValue::from_static("OAuth2Client"),
-        );
+        headers.insert("x-twitter-auth-type", HeaderValue::from_static("OAuth2Client"));
 
         Ok(())
     }

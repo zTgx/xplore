@@ -73,7 +73,6 @@ pub struct ExpandedUrl {
 
 lazy_static! {
     pub static ref ID_CACHE: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -157,20 +156,12 @@ impl From<(&LegacyUserRaw, Option<bool>)> for Profile {
                 .created_at
                 .as_ref()
                 .and_then(|date_str| {
-                    DateTime::parse_from_str(date_str, "%a %b %d %H:%M:%S %z %Y")
-                        .ok()
-                        .map(|dt| dt.with_timezone(&Utc))
+                    DateTime::parse_from_str(date_str, "%a %b %d %H:%M:%S %z %Y").ok().map(|dt| dt.with_timezone(&Utc))
                 })
                 .unwrap_or_else(Utc::now),
-            profile_image_url: user
-                .profile_image_url_https
-                .as_ref()
-                .map(|url| url.replace("_normal", "")),
+            profile_image_url: user.profile_image_url_https.as_ref().map(|url| url.replace("_normal", "")),
             profile_banner_url: user.profile_banner_url.clone(),
-            pinned_tweet_id: user
-                .pinned_tweet_ids_str
-                .as_ref()
-                .and_then(|ids| ids.first().cloned()),
+            pinned_tweet_id: user.pinned_tweet_ids_str.as_ref().and_then(|ids| ids.first().cloned()),
         };
 
         // Set website URL from entities using functional chaining

@@ -1,10 +1,8 @@
-use crate::api::client::Xplore;
-use crate::api::requests::request_api;
 use crate::error::Result;
-use crate::timeline::search::{
-    parse_search_timeline_tweets, parse_search_timeline_users, SearchTimeline,
-};
+use crate::http::requests::request_api;
+use crate::timeline::search::{parse_search_timeline_tweets, parse_search_timeline_users, SearchTimeline};
 use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
+use crate::Xplore;
 use reqwest::Method;
 use serde_json::json;
 #[derive(Debug, Clone, Copy)]
@@ -34,8 +32,7 @@ pub async fn search_profiles(
     max_profiles: i32,
     cursor: Option<String>,
 ) -> Result<QueryProfilesResponse> {
-    let timeline =
-        get_search_timeline(client, query, max_profiles, SearchMode::Users, cursor).await?;
+    let timeline = get_search_timeline(client, query, max_profiles, SearchMode::Users, cursor).await?;
 
     Ok(parse_search_timeline_users(&timeline))
 }
@@ -121,22 +118,15 @@ async fn get_search_timeline(
         ("fieldToggles", serde_json::to_string(&field_toggles)?),
     ];
 
-    let query_string = params
-        .iter()
-        .map(|(k, v)| format!("{}={}", k, urlencoding::encode(v)))
-        .collect::<Vec<_>>()
-        .join("&");
+    let query_string =
+        params.iter().map(|(k, v)| format!("{}={}", k, urlencoding::encode(v))).collect::<Vec<_>>().join("&");
 
     let mut headers = reqwest::header::HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
-    let url = format!(
-        "https://api.twitter.com/graphql/gkjsKepM6gl_HmFWoWKfgg/SearchTimeline?{}",
-        query_string
-    );
+    let url = format!("https://api.twitter.com/graphql/gkjsKepM6gl_HmFWoWKfgg/SearchTimeline?{}", query_string);
 
-    let (response, _) =
-        request_api::<SearchTimeline>(&client.client, &url, headers, Method::GET, None).await?;
+    let (response, _) = request_api::<SearchTimeline>(&client.client, &url, headers, Method::GET, None).await?;
 
     Ok(response)
 }

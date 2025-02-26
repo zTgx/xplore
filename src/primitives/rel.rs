@@ -167,9 +167,7 @@ pub struct InnerTimeline {
 #[serde(tag = "type")]
 pub enum Instruction {
     #[serde(rename = "TimelineAddEntries")]
-    AddEntries {
-        entries: Vec<RelationshipTimelineEntry>,
-    },
+    AddEntries { entries: Vec<RelationshipTimelineEntry> },
     #[serde(rename = "TimelineReplaceEntry")]
     ReplaceEntry { entry: RelationshipTimelineEntry },
 }

@@ -1,12 +1,12 @@
-use crate::api::endpoints::Endpoints;
-use crate::api::requests::{request_api, request_multipart_api};
 use crate::error::{Result, TwitterError};
+use crate::http::endpoints::Endpoints;
+use crate::http::requests::{request_api, request_multipart_api};
 use crate::primitives::tweets::Tweet;
 use crate::timeline::v2::parse_threaded_conversation;
 use crate::timeline::v2::parse_timeline_tweets_v2;
 use crate::timeline::v2::QueryTweetsResponse;
 use crate::timeline::v2::ThreadedConversation;
-use crate::{XploreX, IProfile};
+use crate::{IProfile, Xplore};
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
@@ -38,12 +38,7 @@ pub struct Photo {
     pub alt_text: Option<String>,
 }
 
-pub async fn fetch_tweets(
-    client: &XploreX,
-    user_id: &str,
-    max_tweets: i32,
-    cursor: Option<&str>,
-) -> Result<Value> {
+pub async fn fetch_tweets(client: &Xplore, user_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
@@ -73,7 +68,7 @@ pub async fn fetch_tweets(
 }
 
 pub async fn fetch_tweets_and_replies(
-    client: &XploreX,
+    client: &Xplore,
     username: &str,
     max_tweets: i32,
     cursor: Option<&str>,
@@ -85,21 +80,14 @@ pub async fn fetch_tweets_and_replies(
 
     let endpoint = Endpoints::user_tweets_and_replies(&user_id, max_tweets.min(40), cursor);
 
-    let (value, _headers) = request_api(
-        &client.client,
-        &endpoint.to_request_url(),
-        headers,
-        Method::GET,
-        None,
-    )
-    .await?;
+    let (value, _headers) = request_api(&client.client, &endpoint.to_request_url(), headers, Method::GET, None).await?;
 
     let parsed_response = parse_timeline_tweets_v2(&value);
     Ok(parsed_response)
 }
 
 pub async fn fetch_tweets_and_replies_by_user_id(
-    client: &XploreX,
+    client: &Xplore,
     user_id: &str,
     max_tweets: i32,
     cursor: Option<&str>,
@@ -109,25 +97,13 @@ pub async fn fetch_tweets_and_replies_by_user_id(
 
     let endpoint = Endpoints::user_tweets_and_replies(user_id, max_tweets.min(40), cursor);
 
-    let (value, _headers) = request_api(
-        &client.client,
-        &endpoint.to_request_url(),
-        headers,
-        Method::GET,
-        None,
-    )
-    .await?;
+    let (value, _headers) = request_api(&client.client, &endpoint.to_request_url(), headers, Method::GET, None).await?;
 
     let parsed_response = parse_timeline_tweets_v2(&value);
     Ok(parsed_response)
 }
 
-pub async fn fetch_list_tweets(
-    client: &XploreX,
-    list_id: &str,
-    max_tweets: i32,
-    cursor: Option<&str>,
-) -> Result<Value> {
+pub async fn fetch_list_tweets(client: &Xplore, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
@@ -156,7 +132,7 @@ pub async fn fetch_list_tweets(
 }
 
 pub async fn create_quote_tweet(
-    client: &XploreX,
+    client: &Xplore,
     text: &str,
     quoted_tweet_id: &str,
     media_data: Option<Vec<(Vec<u8>, String)>>,
@@ -204,7 +180,7 @@ pub async fn create_quote_tweet(
     Ok(value)
 }
 
-pub async fn like_tweet(client: &XploreX, tweet_id: &str) -> Result<Value> {
+pub async fn like_tweet(client: &Xplore, tweet_id: &str) -> Result<Value> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
@@ -224,7 +200,7 @@ pub async fn like_tweet(client: &XploreX, tweet_id: &str) -> Result<Value> {
     Ok(value)
 }
 
-pub async fn retweet(client: &XploreX, tweet_id: &str) -> Result<Value> {
+pub async fn retweet(client: &Xplore, tweet_id: &str) -> Result<Value> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
@@ -246,7 +222,7 @@ pub async fn retweet(client: &XploreX, tweet_id: &str) -> Result<Value> {
 }
 
 pub async fn create_long_tweet(
-    client: &XploreX,
+    client: &Xplore,
     text: &str,
     reply_to: Option<&str>,
     media_ids: Option<Vec<String>>,
@@ -296,7 +272,7 @@ pub async fn create_long_tweet(
 }
 
 pub async fn fetch_liked_tweets(
-    client: &XploreX,
+    client: &Xplore,
     user_id: &str,
     max_tweets: i32,
     cursor: Option<&str>,
@@ -329,11 +305,7 @@ pub async fn fetch_liked_tweets(
     Ok(value)
 }
 
-pub async fn upload_media(
-    client: &XploreX,
-    file_data: Vec<u8>,
-    media_type: &str,
-) -> Result<String> {
+pub async fn upload_media(client: &Xplore, file_data: Vec<u8>, media_type: &str) -> Result<String> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
 
@@ -347,11 +319,9 @@ pub async fn upload_media(
         upload_video_in_chunks(client, file_data, media_type, headers).await
     } else {
         // Handle image upload directly
-        let form = reqwest::multipart::Form::new()
-            .part("media", reqwest::multipart::Part::bytes(file_data));
+        let form = reqwest::multipart::Form::new().part("media", reqwest::multipart::Part::bytes(file_data));
 
-        let (response, _) =
-            request_multipart_api::<Value>(&client.client, upload_url, headers, form).await?;
+        let (response, _) = request_multipart_api::<Value>(&client.client, upload_url, headers, form).await?;
 
         response["media_id_string"]
             .as_str()
@@ -361,7 +331,7 @@ pub async fn upload_media(
 }
 
 async fn upload_video_in_chunks(
-    client: &XploreX,
+    client: &Xplore,
     file_data: Vec<u8>,
     media_type: &str,
     headers: HeaderMap,
@@ -398,9 +368,7 @@ async fn upload_video_in_chunks(
             .text("segment_index", segment_index.to_string())
             .part("media", reqwest::multipart::Part::bytes(chunk.to_vec()));
 
-        let (_, _) =
-            request_multipart_api::<Value>(&client.client, upload_url, headers.clone(), form)
-                .await?;
+        let (_, _) = request_multipart_api::<Value>(&client.client, upload_url, headers.clone(), form).await?;
 
         segment_index += 1;
     }
@@ -423,7 +391,7 @@ async fn upload_video_in_chunks(
     Ok(media_id)
 }
 
-async fn check_upload_status(client: &XploreX, media_id: &str, headers: &HeaderMap) -> Result<()> {
+async fn check_upload_status(client: &Xplore, media_id: &str, headers: &HeaderMap) -> Result<()> {
     let upload_url = "https://upload.twitter.com/1.1/media/upload.json";
 
     for _ in 0..20 {
@@ -451,21 +419,17 @@ async fn check_upload_status(client: &XploreX, media_id: &str, headers: &HeaderM
     Err(TwitterError::Api("Video processing timeout".into()))
 }
 
-pub async fn get_tweet(client: &XploreX, id: &str) -> Result<Tweet> {
+pub async fn get_tweet(client: &Xplore, id: &str) -> Result<Tweet> {
     let mut headers = HeaderMap::new();
     client.auth.install_headers(&mut headers).await?;
     let tweet_detail_request = Endpoints::tweet_detail(id);
     let url = tweet_detail_request.to_request_url();
 
-    let (response, _) =
-        request_api::<Value>(&client.client, &url, headers, Method::GET, None).await?;
+    let (response, _) = request_api::<Value>(&client.client, &url, headers, Method::GET, None).await?;
     let data = response.clone();
     let conversation: ThreadedConversation = serde_json::from_value(data)?;
     let tweets = parse_threaded_conversation(&conversation);
-    tweets
-        .into_iter()
-        .next()
-        .ok_or_else(|| TwitterError::Api("No tweets found".into()))
+    tweets.into_iter().next().ok_or_else(|| TwitterError::Api("No tweets found".into()))
 }
 
 fn create_tweet_features() -> Value {
@@ -578,7 +542,7 @@ fn get_long_tweet_features() -> Value {
 }
 
 pub async fn create_tweet_request(
-    client: &XploreX,
+    client: &Xplore,
     text: &str,
     reply_to: Option<&str>,
     media_data: Option<Vec<(Vec<u8>, String)>>,
@@ -680,7 +644,7 @@ fn create_quote_tweet_features() -> Value {
 }
 
 pub async fn fetch_user_tweets(
-    client: &XploreX,
+    client: &Xplore,
     user_id: &str,
     max_tweets: i32,
     cursor: Option<&str>,
@@ -690,14 +654,7 @@ pub async fn fetch_user_tweets(
 
     let endpoint = Endpoints::user_tweets(user_id, max_tweets.min(200), cursor);
 
-    let (value, _headers) = request_api(
-        &client.client,
-        &endpoint.to_request_url(),
-        headers,
-        Method::GET,
-        None,
-    )
-    .await?;
+    let (value, _headers) = request_api(&client.client, &endpoint.to_request_url(), headers, Method::GET, None).await?;
 
     let parsed_response = parse_timeline_tweets_v2(&value);
     Ok(parsed_response)

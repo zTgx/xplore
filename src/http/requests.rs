@@ -27,19 +27,13 @@ where
         let parsed: T = serde_json::from_str(&text)?;
         Ok((parsed, headers))
     } else {
-        Err(crate::error::TwitterError::Api(format!(
-            "Request failed with status: {}",
-            response.status()
-        )))
+        Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
     }
 }
 
 pub async fn get_guest_token(client: &Client, bearer_token: &str) -> Result<String> {
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "Authorization",
-        format!("Bearer {}", bearer_token).parse().unwrap(),
-    );
+    headers.insert("Authorization", format!("Bearer {}", bearer_token).parse().unwrap());
 
     let (response, _) = request_api::<serde_json::Value>(
         client,
@@ -66,10 +60,7 @@ pub async fn request_multipart_api<T>(
 where
     T: DeserializeOwned,
 {
-    let request = client
-        .request(Method::POST, url)
-        .headers(headers)
-        .multipart(form);
+    let request = client.request(Method::POST, url).headers(headers).multipart(form);
 
     let response = request.send().await?;
 
@@ -79,10 +70,7 @@ where
         let parsed: T = serde_json::from_str(&text)?;
         Ok((parsed, headers))
     } else {
-        Err(crate::error::TwitterError::Api(format!(
-            "Request failed with status: {}",
-            response.status()
-        )))
+        Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
     }
 }
 
@@ -95,10 +83,7 @@ pub async fn request_form_api<T>(
 where
     T: DeserializeOwned,
 {
-    let request = client
-        .request(Method::POST, url)
-        .headers(headers)
-        .form(&form_data);
+    let request = client.request(Method::POST, url).headers(headers).form(&form_data);
 
     let response = request.send().await?;
 
@@ -108,9 +93,6 @@ where
         let parsed: T = serde_json::from_str(&text)?;
         Ok((parsed, headers))
     } else {
-        Err(crate::error::TwitterError::Api(format!(
-            "Request failed with status: {}",
-            response.status()
-        )))
+        Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
     }
 }

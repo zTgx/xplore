@@ -1,14 +1,14 @@
-use crate::api::requests::request_api;
 use crate::error::{Result, TwitterError};
+use crate::http::requests::request_api;
 use crate::primitives::constants::{URL_USER_BY_REST_ID, URL_USER_BY_SCREEN_NAME};
 use crate::primitives::profile::*;
-use crate::{IProfile, XploreX};
+use crate::{IProfile, Xplore};
 use async_trait::async_trait;
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 
 #[async_trait]
-impl IProfile for XploreX {
+impl IProfile for Xplore {
     async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile> {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
@@ -34,10 +34,7 @@ impl IProfile for XploreX {
         let is_blue_verified = user_raw_result.is_blue_verified;
         legacy.user_id = rest_id;
         if legacy.screen_name.is_none() || legacy.screen_name.as_ref().unwrap().is_empty() {
-            return Err(TwitterError::Api(format!(
-                "Either {} does not exist or is private.",
-                screen_name
-            )));
+            return Err(TwitterError::Api(format!("Either {} does not exist or is private.", screen_name)));
         }
         Ok((&legacy, is_blue_verified).into())
     }
@@ -65,10 +62,7 @@ impl IProfile for XploreX {
         if let Some(user) = response.data.user.result.legacy.screen_name {
             Ok(user)
         } else {
-            Err(TwitterError::Api(format!(
-                "Either user with ID {} does not exist or is private.",
-                user_id
-            )))
+            Err(TwitterError::Api(format!("Either user with ID {} does not exist or is private.", user_id)))
         }
     }
 

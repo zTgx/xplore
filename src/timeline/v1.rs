@@ -373,48 +373,28 @@ pub fn parse_timeline_tweet(timeline: &TimelineV1, id: &str) -> ParseTweetResult
     let empty_tweets = HashMap::new();
     let tweets = match &timeline.global_objects {
         Some(go) => go.tweets.as_ref().unwrap_or(&empty_tweets),
-        None => {
-            return ParseTweetResult::Error {
-                err: "No global objects found".to_string(),
-            }
-        }
+        None => return ParseTweetResult::Error { err: "No global objects found".to_string() },
     };
 
     let tweet = match tweets.get(id) {
         Some(Some(t)) => t,
-        _ => {
-            return ParseTweetResult::Error {
-                err: format!("Tweet \"{}\" was not found in the timeline object.", id),
-            }
-        }
+        _ => return ParseTweetResult::Error { err: format!("Tweet \"{}\" was not found in the timeline object.", id) },
     };
 
     let user_id = match &tweet.user_id_str {
         Some(id) => id,
-        None => {
-            return ParseTweetResult::Error {
-                err: "Tweet has no user ID".to_string(),
-            }
-        }
+        None => return ParseTweetResult::Error { err: "Tweet has no user ID".to_string() },
     };
 
     let empty_users = HashMap::new();
     let users = match &timeline.global_objects {
         Some(go) => go.users.as_ref().unwrap_or(&empty_users),
-        None => {
-            return ParseTweetResult::Error {
-                err: "No users found".to_string(),
-            }
-        }
+        None => return ParseTweetResult::Error { err: "No users found".to_string() },
     };
 
     let user = match users.get(user_id) {
         Some(Some(u)) => u,
-        _ => {
-            return ParseTweetResult::Error {
-                err: format!("User \"{}\" has no username data.", user_id),
-            }
-        }
+        _ => return ParseTweetResult::Error { err: format!("User \"{}\" has no username data.", user_id) },
     };
 
     let hashtags = tweet
@@ -434,11 +414,7 @@ pub fn parse_timeline_tweet(timeline: &TimelineV1, id: &str) -> ParseTweetResult
                     if let (Some(id), Some(screen_name), Some(name)) =
                         (&mention.id_str, &mention.screen_name, &mention.name)
                     {
-                        Some(Mention {
-                            id: id.clone(),
-                            username: Some(screen_name.clone()),
-                            name: Some(name.clone()),
-                        })
+                        Some(Mention { id: id.clone(), username: Some(screen_name.clone()), name: Some(name.clone()) })
                     } else {
                         None
                     }
@@ -448,21 +424,13 @@ pub fn parse_timeline_tweet(timeline: &TimelineV1, id: &str) -> ParseTweetResult
         .unwrap_or_default();
 
     let empty_media = Vec::new();
-    let media = tweet
-        .extended_entities
-        .as_ref()
-        .and_then(|e| e.media.as_ref())
-        .unwrap_or(&empty_media);
+    let media = tweet.extended_entities.as_ref().and_then(|e| e.media.as_ref()).unwrap_or(&empty_media);
 
     let urls = tweet
         .entities
         .as_ref()
         .and_then(|e| e.urls.as_ref())
-        .map(|u| {
-            u.iter()
-                .filter_map(|url| url.expanded_url.clone())
-                .collect()
-        })
+        .map(|u| u.iter().filter_map(|url| url.expanded_url.clone()).collect())
         .unwrap_or_default();
 
     let (photos, videos, sensitive_content) = parse_media_groups(media);
@@ -531,10 +499,7 @@ pub fn parse_timeline_tweet(timeline: &TimelineV1, id: &str) -> ParseTweetResult
         tweet_obj.is_quoted = Some(true);
         tweet_obj.quoted_status_id = Some(quoted_id.clone());
 
-        if let ParseTweetResult::Success {
-            tweet: quoted_tweet,
-        } = parse_timeline_tweet(timeline, quoted_id)
-        {
+        if let ParseTweetResult::Success { tweet: quoted_tweet } = parse_timeline_tweet(timeline, quoted_id) {
             tweet_obj.quoted_status = Some(Box::new(quoted_tweet));
         }
     }
