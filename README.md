@@ -3,9 +3,9 @@
 [Discord](https://discord.gg/9b4YQmjh)
 
 # xplore   
-A brand new Twitter/X client in Rust
+Twitter/X for Rust
 
-![Version](https://img.shields.io/crates/v/xplore)
+[![Version](https://img.shields.io/crates/v/xplore)](https://crates.io/crates/xplore)
 ![Crates Downloads](https://img.shields.io/crates/d/xplore?logo=rust)
 ![GitHub License](https://img.shields.io/github/license/solagent-rs/xplore)
 

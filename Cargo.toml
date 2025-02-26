@@ -2,11 +2,11 @@
 name = "xplore"
 version = "0.1.0"
 edition = "2021"
-description = "Brand new X client"
+description = "Twitter/X for Rust"
 license = "MIT"
 repository = "https://github.com/solagent-rs/xplore"
 readme = "README.md"
-keywords = ["twitter", "client"]
+keywords = ["twitter", "api"]
 
 [dependencies]
 reqwest = { version = "0.11", features = ["json", "cookies", "multipart"] }
