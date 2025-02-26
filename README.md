@@ -28,19 +28,30 @@ A brand new Twitter/X client in Rust
 xplore = "0.1"
 ```
 
+## Quick start
+```rust
+use dotenv::dotenv;
+use std::env;
+use xplore::{IProfile, Xplore};
+
+#[tokio::main]
+async fn main() {
+    dotenv().ok();
+    let screen_name = "zTgx5";
+
+    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
+
+    let xplore = Xplore::new(&cookie).await.unwrap();
+    let profile_data = xplore.get_profile_by_screen_name(screen_name).await.unwrap();
+
+    println!("{:#?}", profile_data);
+}
+```
+
 ## Reference projects
 * https://github.com/cornip/Rina  
 
 This project was refactored based on the above project. Thank you to the developers for their open-source spirit!
-
-
-## License
-
-MIT
-
-## Contributing
-
-We welcome contributions! Please feel free to submit a Pull Request.
 
 ## Star History
 
