@@ -1,5 +1,6 @@
 use crate::api::requests::request_api;
 use crate::error::{Result, TwitterError};
+use crate::primitives::BEARER_TOKEN;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
@@ -87,9 +88,9 @@ pub struct TwitterUserAuth {
 }
 
 impl TwitterUserAuth {
-    pub async fn new(bearer_token: String) -> Result<Self> {
+    pub async fn new() -> Result<Self> {
         Ok(Self {
-            bearer_token,
+            bearer_token: BEARER_TOKEN.to_string(),
             guest_token: None,
             cookie_jar: Arc::new(Mutex::new(CookieJar::new())),
             created_at: None,

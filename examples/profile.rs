@@ -1,14 +1,19 @@
 use xplore::{IProfile, XploreX};
+use std::env;
+use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() {
-    let xplore = XploreX::new().await;
-
+    dotenv().ok();
     let screen_name = "zTgx5";
+
+    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
+
+    let xplore = XploreX::new(&cookie).await.unwrap();
     let profile_data = xplore
         .get_profile_by_screen_name(screen_name)
-        .await
-        .unwrap();
+        .await.unwrap();
+
     println!("{:#?}", profile_data);
 
     // Profile {

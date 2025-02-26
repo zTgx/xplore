@@ -1,10 +1,7 @@
 use async_trait::async_trait;
-use auth::user_auth::{TwitterAuth, TwitterUserAuth};
-use dotenv::dotenv;
-use primitives::{Profile, BEARER_TOKEN};
+use auth::user_auth::TwitterUserAuth;
+use primitives::Profile;
 use reqwest::Client;
-use std::env;
-use std::time::Duration;
 use crate::error::Result;
 
 pub mod api;
@@ -26,29 +23,43 @@ pub trait IProfile {
 
 pub struct XploreX {
     pub client: Client,
-    pub auth: Box<dyn TwitterAuth + Send + Sync>,
+    pub auth: TwitterUserAuth,
 }
 
 impl XploreX {
-    pub async fn new() -> Self {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(30))
-            .cookie_store(true)
-            .build()
-            .expect("reqwest client");
+    pub async fn new(cookie: &str) -> Result<Self> {
+        let client = xplore_utils::client()?;
+        let auth = xplore_utils::make_auth(cookie).await?;
 
-        dotenv().ok();
+        Ok(XploreX {
+            client,
+            auth,
+        })
+    }
+}
 
-        let x_cookie_string = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
+mod xplore_utils {
+    use reqwest::Client;
+    use std::time::Duration;
+    use crate::{auth::user_auth::TwitterUserAuth, error::{Result, TwitterError}};
 
-        let mut auth = TwitterUserAuth::new(BEARER_TOKEN.to_string())
-            .await
-            .expect("X user auth");
-        auth.set_from_cookie_string(&x_cookie_string)
-            .await
-            .expect("x cookie string");
+    pub fn client() -> Result<Client> {
+        Client::builder()
+        .timeout(Duration::from_secs(30))
+        .cookie_store(true)
+        .build()
+        .map_err(|e| {
+            TwitterError::Network(e)
+        })
+    }
 
-        let auth = Box::new(auth);
-        XploreX { client, auth }
+    pub async fn make_auth(cookie: &str) -> Result<TwitterUserAuth> {
+        let mut auth = TwitterUserAuth::new()
+            .await?;
+
+        auth.set_from_cookie_string(cookie)
+            .await?;
+
+        Ok(auth)
     }
 }

@@ -1,5 +1,6 @@
 use crate::api::endpoints::Endpoints;
 use crate::api::requests::{request_api, request_multipart_api};
+use crate::auth::user_auth::TwitterAuth;
 use crate::error::{Result, TwitterError};
 use crate::primitives::tweets::Tweet;
 use crate::timeline::v2::parse_threaded_conversation;

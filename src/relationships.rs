@@ -1,5 +1,6 @@
 use crate::api::requests::request_api;
 use crate::api::requests::request_form_api;
+use crate::auth::user_auth::TwitterAuth;
 use crate::error::Result;
 use crate::primitives::Profile;
 use crate::primitives::RelationshipTimeline;

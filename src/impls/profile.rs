@@ -1,4 +1,5 @@
 use crate::api::requests::request_api;
+use crate::auth::user_auth::TwitterAuth;
 use crate::error::{Result, TwitterError};
 use crate::primitives::constants::{URL_USER_BY_REST_ID, URL_USER_BY_SCREEN_NAME};
 use crate::primitives::profile::*;
@@ -73,22 +74,17 @@ impl IProfile for XploreX {
     }
 
     async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String> {
-        // 克隆 Arc
         let cache = ID_CACHE.clone();
 
-        // 获取锁
         let mut cache = cache.lock().await;
         if let Some(cached_id) = cache.get(screen_name) {
             return Ok(cached_id.clone());
         }
 
-        // 获取用户信息
         let profile = self.get_profile_by_screen_name(screen_name).await?;
 
-        // 提取用户 ID
         let user_id = profile.id;
 
-        // 更新缓存
         cache.insert(screen_name.to_string(), user_id.clone());
 
         Ok(user_id)
