@@ -30,10 +30,9 @@ impl XploreX {
 
         dotenv().ok();
 
-        let bearer_token = env::var("BEARER_TOKEN").expect("bearer_token");
         let x_cookie_string = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
 
-        let mut auth = TwitterUserAuth::new(bearer_token)
+        let mut auth = TwitterUserAuth::new(BEARER_TOKEN.to_string())
             .await
             .expect("X user auth");
         auth.set_from_cookie_string(&x_cookie_string)
