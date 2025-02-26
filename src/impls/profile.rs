@@ -5,45 +5,18 @@ use crate::primitives::profile::*;
 use crate::XploreX;
 use reqwest::header::HeaderMap;
 use reqwest::Method;
-use serde_json::json;
 
 impl XploreX {
     pub async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile> {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
 
-        let variables = json!({
-            "screen_name": screen_name,
-            "withSafetyModeUserFields": true
-        });
-
-        let features = json!({
-            "hidden_profile_likes_enabled": false,
-            "hidden_profile_subscriptions_enabled": false,
-            "responsive_web_graphql_exclude_directive_enabled": true,
-            "verified_phone_label_enabled": false,
-            "subscriptions_verification_info_is_identity_verified_enabled": false,
-            "subscriptions_verification_info_verified_since_enabled": true,
-            "highlights_tweets_tab_ui_enabled": true,
-            "creator_subscriptions_tweet_preview_api_enabled": true,
-            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
-            "responsive_web_graphql_timeline_navigation_enabled": true
-        });
-
-        let field_toggles = json!({
-            "withAuxiliaryUserLabels": false
-        });
-
         let (response, _) = request_api::<UserRaw>(
             &self.client,
             URL_USER_BY_SCREEN_NAME,
             headers,
             Method::GET,
-            Some(json!({
-                "variables": variables,
-                "features": features,
-                "fieldToggles": field_toggles
-            })),
+            profile_utils::screen_name_body(screen_name),
         )
         .await?;
 
@@ -52,6 +25,7 @@ impl XploreX {
                 return Err(TwitterError::Api(errors[0].message.clone()));
             }
         }
+
         let user_raw_result = &response.data.user.result;
         let mut legacy = user_raw_result.legacy.clone();
         let rest_id = user_raw_result.rest_id.clone();
@@ -71,33 +45,12 @@ impl XploreX {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
 
-        let variables = json!({
-            "userId": user_id,
-            "withSafetyModeUserFields": true
-        });
-
-        let features = json!({
-            "hidden_profile_subscriptions_enabled": true,
-            "rweb_tipjar_consumption_enabled": true,
-            "responsive_web_graphql_exclude_directive_enabled": true,
-            "verified_phone_label_enabled": false,
-            "highlights_tweets_tab_ui_enabled": true,
-            "responsive_web_twitter_article_notes_tab_enabled": true,
-            "subscriptions_feature_can_gift_premium": false,
-            "creator_subscriptions_tweet_preview_api_enabled": true,
-            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
-            "responsive_web_graphql_timeline_navigation_enabled": true
-        });
-
         let (response, _) = request_api::<UserRaw>(
             &self.client,
             URL_USER_BY_REST_ID,
             headers,
             Method::GET,
-            Some(json!({
-                "variables": variables,
-                "features": features
-            })),
+            profile_utils::user_id_body(user_id),
         )
         .await?;
 
@@ -118,19 +71,87 @@ impl XploreX {
     }
 
     pub async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String> {
-        if let Some(cached_id) = ID_CACHE.lock().unwrap().get(screen_name) {
+        let mut cache = ID_CACHE.lock().map_err(|e| TwitterError::Api(e.to_string()))?;
+        if let Some(cached_id) = cache.get(screen_name) {
             return Ok(cached_id.clone());
         }
-
+    
         let profile = self.get_profile_by_screen_name(screen_name).await?;
-        if let Some(user_id) = Some(profile.id) {
-            ID_CACHE
-                .lock()
-                .unwrap()
-                .insert(screen_name.to_string(), user_id.clone());
-            Ok(user_id)
-        } else {
-            Err(TwitterError::Api("User ID is undefined".into()))
-        }
+    
+        let user_id = profile.id;
+    
+        cache.insert(screen_name.to_string(), user_id.clone());
+    
+        Ok(user_id)
+    }
+}
+
+mod profile_utils {
+    use serde_json::{json, Value};
+
+    fn get_screen_name_var(screen_name: &str) -> Value {
+        json!({
+            "screen_name": screen_name,
+            "withSafetyModeUserFields": true
+        })
+    }
+
+    fn get_screen_name_features() -> Value {
+        json!({
+            "hidden_profile_likes_enabled": false,
+            "hidden_profile_subscriptions_enabled": false,
+            "responsive_web_graphql_exclude_directive_enabled": true,
+            "verified_phone_label_enabled": false,
+            "subscriptions_verification_info_is_identity_verified_enabled": false,
+            "subscriptions_verification_info_verified_since_enabled": true,
+            "highlights_tweets_tab_ui_enabled": true,
+            "creator_subscriptions_tweet_preview_api_enabled": true,
+            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
+            "responsive_web_graphql_timeline_navigation_enabled": true
+        })
+    }
+
+    fn field_toggles(toggle: bool) -> Value {
+        json!({
+            "withAuxiliaryUserLabels": toggle
+        })
+    }
+
+    pub fn screen_name_body(screen_name: &str) -> Option<Value> {
+        Some(json!({
+            "variables": get_screen_name_var(screen_name),
+            "features": get_screen_name_features(),
+            "fieldToggles": field_toggles(false)
+        }))
+    }
+
+    /// user id
+    fn get_user_id_var(user_id: &str) -> Value {
+        json!({
+            "userId": user_id,
+            "withSafetyModeUserFields": true
+        })
+    }
+
+    fn get_user_id_features() -> Value {
+        json!({
+            "hidden_profile_subscriptions_enabled": true,
+            "rweb_tipjar_consumption_enabled": true,
+            "responsive_web_graphql_exclude_directive_enabled": true,
+            "verified_phone_label_enabled": false,
+            "highlights_tweets_tab_ui_enabled": true,
+            "responsive_web_twitter_article_notes_tab_enabled": true,
+            "subscriptions_feature_can_gift_premium": false,
+            "creator_subscriptions_tweet_preview_api_enabled": true,
+            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
+            "responsive_web_graphql_timeline_navigation_enabled": true
+        })
+    }
+
+    pub fn user_id_body(user_id: &str) -> Option<Value> {
+        Some(json!({
+            "variables": get_user_id_var(user_id),
+            "features": get_user_id_features(),
+        }))
     }
 }

@@ -1,4 +1,4 @@
-use crate::impls::profile::parse_profile;
+use crate::primitives::Profile;
 use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
 use crate::timeline::v2::{parse_legacy_tweet, SearchEntryRaw};
 use lazy_static::lazy_static;
@@ -178,8 +178,8 @@ pub fn parse_search_timeline_users(timeline: &SearchTimeline) -> QueryProfilesRe
                                 if let Some(user_results) = &item_content.user_results {
                                     if let Some(result) = &user_results.result {
                                         if let Some(legacy) = &result.legacy {
-                                            let mut profile =
-                                                parse_profile(legacy, result.is_blue_verified);
+                                            let mut profile: Profile =
+                                                (legacy, result.is_blue_verified).into();
 
                                             if profile.id.is_empty() {
                                                 profile.id =
