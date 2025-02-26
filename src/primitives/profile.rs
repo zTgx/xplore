@@ -134,3 +134,52 @@ pub struct TwitterApiErrorRaw {
     pub message: String,
     pub code: i32,
 }
+
+impl From<(&LegacyUserRaw, Option<bool>)> for Profile {
+    fn from((user, is_blue_verified): (&LegacyUserRaw, Option<bool>)) -> Self {
+        let mut profile = Profile {
+            id: user.user_id.clone().unwrap_or_default(),
+            username: user.screen_name.clone().unwrap_or_default(),
+            name: user.name.clone().unwrap_or_default(),
+            description: user.description.clone(),
+            location: Some(user.location.clone()),
+            url: user.url.clone(),
+            protected: user.protected.unwrap_or(false),
+            verified: user.verified.unwrap_or(false),
+            followers_count: user.followers_count.unwrap_or(0),
+            following_count: user.friends_count.unwrap_or(0),
+            tweets_count: user.statuses_count.unwrap_or(0),
+            listed_count: user.listed_count.unwrap_or(0),
+            is_blue_verified,
+            created_at: user
+                .created_at
+                .as_ref()
+                .and_then(|date_str| {
+                    DateTime::parse_from_str(date_str, "%a %b %d %H:%M:%S %z %Y")
+                        .ok()
+                        .map(|dt| dt.with_timezone(&Utc))
+                })
+                .unwrap_or_else(Utc::now),
+            profile_image_url: user
+                .profile_image_url_https
+                .as_ref()
+                .map(|url| url.replace("_normal", "")),
+            profile_banner_url: user.profile_banner_url.clone(),
+            pinned_tweet_id: user
+                .pinned_tweet_ids_str
+                .as_ref()
+                .and_then(|ids| ids.first().cloned()),
+        };
+
+        // Set website URL from entities using functional chaining
+        user.entities
+            .as_ref()
+            .and_then(|entities| entities.url.as_ref())
+            .and_then(|url_entity| url_entity.urls.as_ref())
+            .and_then(|urls| urls.first())
+            .and_then(|first_url| first_url.expanded_url.as_ref())
+            .map(|expanded_url| profile.url = Some(expanded_url.clone()));
+
+        profile
+    }
+}
