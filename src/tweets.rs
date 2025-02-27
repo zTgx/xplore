@@ -6,7 +6,7 @@ use crate::timeline::v2::parse_threaded_conversation;
 use crate::timeline::v2::parse_timeline_tweets_v2;
 use crate::timeline::v2::QueryTweetsResponse;
 use crate::timeline::v2::ThreadedConversation;
-use crate::{IProfile, Xplore};
+use crate::Xplore;
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};

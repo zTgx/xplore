@@ -2,14 +2,12 @@ use crate::error::{Result, TwitterError};
 use crate::http::requests::request_api;
 use crate::primitives::constants::{URL_USER_BY_REST_ID, URL_USER_BY_SCREEN_NAME};
 use crate::primitives::profile::*;
-use crate::{IProfile, Xplore};
-use async_trait::async_trait;
+use crate::Xplore;
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 
-#[async_trait]
-impl IProfile for Xplore {
-    async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile> {
+impl Xplore {
+    pub async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile> {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
 
@@ -40,7 +38,7 @@ impl IProfile for Xplore {
     }
 
     #[allow(dead_code)]
-    async fn get_screen_name_by_user_id(&self, user_id: &str) -> Result<String> {
+    pub async fn get_screen_name_by_user_id(&self, user_id: &str) -> Result<String> {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
 
@@ -66,7 +64,7 @@ impl IProfile for Xplore {
         }
     }
 
-    async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String> {
+    pub async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String> {
         let cache = ID_CACHE.clone();
 
         let mut cache = cache.lock().await;

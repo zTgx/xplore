@@ -14,37 +14,7 @@ pub struct Scraper {
 }
 
 impl Scraper {
-    pub async fn new() -> Result<Self> {
-        let auth = Box::new(UserAuth::new(BEARER_TOKEN.to_string()).await?);
-        let twitter_client = Xplore::new(auth.clone())?;
-        Ok(Self { twitter_client })
-    }
 
-    pub async fn login(
-        &mut self,
-        username: String,
-        password: String,
-        email: Option<String>,
-        two_factor_secret: Option<String>,
-    ) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<UserAuth>() {
-            let mut auth = user_auth.clone();
-            auth.login(
-                &self.twitter_client.client,
-                &username,
-                &password,
-                email.as_deref(),
-                two_factor_secret.as_deref(),
-            )
-            .await?;
-
-            self.twitter_client.auth = Box::new(auth.clone());
-            //self.client = Xplore::new(Box::new(auth))?;
-            Ok(())
-        } else {
-            Err(TwitterError::Auth("Invalid auth type".into()))
-        }
-    }
 
     pub async fn get_profile(&self, username: &str) -> Result<crate::primitives::Profile> {
         crate::profile::get_profile(&self.twitter_client, username).await

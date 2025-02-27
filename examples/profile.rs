@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use std::env;
-use xplore::{IProfile, Xplore};
+use xplore::Xplore;
 
 #[tokio::main]
 async fn main() {
@@ -13,6 +13,11 @@ async fn main() {
     let profile_data = xplore.get_profile_by_screen_name(screen_name).await.unwrap();
 
     println!("{:#?}", profile_data);
+
+    // let x = xplore.send_tweet("Hello from xplore", None, None).await.unwrap();
+
+    let x = xplore.get_tweet("1895043182901051656").await.unwrap();
+    println!("Tweet: {:#?}", x);
 
     // Profile {
     //     id: "1222365222934962177",

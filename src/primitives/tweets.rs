@@ -100,3 +100,143 @@ pub struct PollOption {
     pub label: String,
     pub votes: Option<i32>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetResponse {
+    data: TweetData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetData {
+    create_tweet: TweetCreateResult,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetCreateResult {
+    tweet_results: TweetResultWrapper,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetResultWrapper {
+    result: TweetResult,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetResult {
+    core: TweetCore,
+    edit_control: TweetEditControl,
+    is_translatable: bool,
+    legacy: TweetLegacy,
+    rest_id: String,
+    source: String,
+    unmention_data: serde_json::Value,
+    unmention_info: serde_json::Value,
+    views: TweetViews,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetCore {
+    user_results: UserResultWrapper,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserResultWrapper {
+    result: UserResult,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserResult {
+    __typename: String,
+    affiliates_highlighted_label: serde_json::Value,
+    has_graduated_access: bool,
+    id: String,
+    is_blue_verified: bool,
+    legacy: UserLegacy,
+    profile_image_shape: String,
+    rest_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserLegacy {
+    can_dm: bool,
+    can_media_tag: bool,
+    created_at: String,
+    default_profile: bool,
+    default_profile_image: bool,
+    description: String,
+    entities: UserEntities,
+    fast_followers_count: u64,
+    favourites_count: u64,
+    followers_count: u64,
+    friends_count: u64,
+    has_custom_timelines: bool,
+    is_translator: bool,
+    listed_count: u64,
+    location: String,
+    media_count: u64,
+    name: String,
+    needs_phone_verification: bool,
+    normal_followers_count: u64,
+    pinned_tweet_ids_str: Vec<String>,
+    possibly_sensitive: bool,
+    profile_image_url_https: String,
+    profile_interstitial_type: String,
+    screen_name: String,
+    statuses_count: u64,
+    translator_type: String,
+    verified: bool,
+    want_retweets: bool,
+    withheld_in_countries: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserEntities {
+    description: UserDescriptionEntities,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserDescriptionEntities {
+    urls: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetEditControl {
+    edit_tweet_ids: Vec<String>,
+    editable_until_msecs: String,
+    edits_remaining: String,
+    is_edit_eligible: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetLegacy {
+    bookmark_count: u64,
+    bookmarked: bool,
+    conversation_id_str: String,
+    created_at: String,
+    display_text_range: Vec<u64>,
+    entities: TweetEntities,
+    favorite_count: u64,
+    favorited: bool,
+    full_text: String,
+    id_str: String,
+    is_quote_status: bool,
+    lang: String,
+    quote_count: u64,
+    reply_count: u64,
+    retweet_count: u64,
+    retweeted: bool,
+    user_id_str: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetEntities {
+    hashtags: Vec<serde_json::Value>,
+    symbols: Vec<serde_json::Value>,
+    urls: Vec<serde_json::Value>,
+    user_mentions: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TweetViews {
+    state: String,
+}

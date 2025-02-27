@@ -1,8 +1,8 @@
 use crate::error::Result;
-use async_trait::async_trait;
 use auth::UserAuth;
-use primitives::{Profile, Tweet};
+use primitives::Tweet;
 use reqwest::Client;
+use serde_json::Value;
 
 pub mod auth;
 pub mod error;
@@ -14,16 +14,14 @@ pub mod search;
 pub mod timeline;
 pub mod tweets;
 
-#[async_trait]
-pub trait IProfile {
-    async fn get_profile_by_screen_name(&self, screen_name: &str) -> Result<Profile>;
-    async fn get_screen_name_by_user_id(&self, user_id: &str) -> Result<String>;
-    async fn get_user_id_by_screen_name(&self, screen_name: &str) -> Result<String>;
-}
-
+/// `Xplore` struct represents the core components needed for the application.
+/// It contains the client for making requests and the authentication details.
 #[derive(Clone)]
 pub struct Xplore {
+    /// The client used to interact with external services.
     pub client: Client,
+
+    /// The authentication details for user access.
     pub auth: UserAuth,
 }
 
@@ -37,22 +35,17 @@ impl Xplore {
 }
 
 impl Xplore {
-    pub async fn send_tweet(&self, text: &str, media_ids: Option<Vec<String>>) -> Result<Tweet> {
-        let mut params = serde_json::json!({
-            "text": text,
-        });
-
-        if let Some(ids) = media_ids {
-            params["media"] = serde_json::json!({ "media_ids": ids });
-        }
-
-        let endpoint = "https://api.twitter.com/2/tweets";
-        self.post(endpoint, Some(params)).await
+    pub async fn send_tweet(
+        &self,
+        text: &str,
+        reply_to: Option<&str>,
+        media_data: Option<Vec<(Vec<u8>, String)>>,
+    ) -> Result<Value> {
+        crate::tweets::create_tweet_request(&self, text, reply_to, media_data).await
     }
 
     pub async fn get_tweet(&self, tweet_id: &str) -> Result<Tweet> {
-        let endpoint = format!("https://api.twitter.com/2/tweets/{}", tweet_id);
-        self.get(&endpoint).await
+        crate::tweets::get_tweet(&self, tweet_id).await
     }
 
     pub async fn get_user_tweets(&self, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {
