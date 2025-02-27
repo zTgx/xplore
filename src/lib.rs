@@ -1,6 +1,6 @@
 use crate::error::Result;
 use auth::UserAuth;
-use primitives::Tweet;
+use primitives::{Tweet, TweetRetweetResponse};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -35,7 +35,7 @@ impl Xplore {
 }
 
 impl Xplore {
-    pub async fn send_tweet(
+    pub async fn post_tweet(
         &self,
         text: &str,
         reply_to: Option<&str>,
@@ -44,8 +44,15 @@ impl Xplore {
         crate::tweets::create_tweet_request(&self, text, reply_to, media_data).await
     }
 
-    pub async fn get_tweet(&self, tweet_id: &str) -> Result<Tweet> {
+    pub async fn read_tweet(&self, tweet_id: &str) -> Result<Tweet> {
         crate::tweets::get_tweet(&self, tweet_id).await
+    }
+
+    pub async fn retweet(&self, tweet_id: &str) -> Result<TweetRetweetResponse> {
+        let value = crate::tweets::retweet(&self, tweet_id).await?;
+        let res = serde_json::from_value(value)?;
+
+        Ok(res)
     }
 
     pub async fn get_user_tweets(&self, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {

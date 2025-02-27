@@ -240,3 +240,35 @@ struct TweetEntities {
 struct TweetViews {
     state: String,
 }
+
+/// Retweet
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetResponse {
+    pub data: TweetRetweetData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetData {
+    pub create_retweet: TweetRetweetCreateResult,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetCreateResult {
+    pub retweet_results: TweetRetweetResultWrapper,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetResultWrapper {
+    pub result: TweetRetweetResult,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetResult {
+    pub legacy: TweetRetweetLegacy,
+    pub rest_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TweetRetweetLegacy {
+    pub full_text: String,
+}

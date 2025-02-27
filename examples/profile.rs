@@ -5,18 +5,20 @@ use xplore::Xplore;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let screen_name = "zTgx5";
+    // let screen_name = "zTgx5";
 
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
 
     let xplore = Xplore::new(&cookie).await.unwrap();
-    let profile_data = xplore.get_profile_by_screen_name(screen_name).await.unwrap();
+    // let profile_data = xplore.get_profile_by_screen_name(screen_name).await.unwrap();
 
-    println!("{:#?}", profile_data);
+    // println!("{:#?}", profile_data);
 
     // let x = xplore.send_tweet("Hello from xplore", None, None).await.unwrap();
 
-    let x = xplore.get_tweet("1895043182901051656").await.unwrap();
+    // let x = xplore.read_tweet("1895043182901051656").await.unwrap();
+
+    let x = xplore.retweet("1894770711639536108").await.unwrap();
     println!("Tweet: {:#?}", x);
 
     // Profile {
