@@ -1,6 +1,8 @@
 use crate::error::Result;
+use async_trait::async_trait;
 use auth::UserAuth;
-use primitives::{Tweet, TweetRetweetResponse};
+use inner::Inner;
+use primitives::{Profile, Tweet, TweetRetweetResponse};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -13,6 +15,35 @@ pub mod relationships;
 pub mod search;
 pub mod timeline;
 pub mod tweets;
+
+pub mod cookie;
+pub mod inner;
+pub mod rpc;
+
+// #[derive(Clone)]
+pub struct XYZ {
+    inner: Inner,
+}
+
+impl XYZ {
+    pub async fn new(cookie: &str) -> Result<Self> {
+        let inner = Inner::new(cookie).await?;
+
+        Ok(Self { inner })
+    }
+}
+
+#[async_trait]
+pub trait IXYZProfile {
+    async fn get_profile(&self, screen_name: &str) -> Result<Profile>;
+    async fn get_user_id(&self, screen_name: &str) -> Result<String>;
+}
+
+#[async_trait]
+pub trait IXYZTweet {
+    async fn post_tweet(&self, text: &str);
+}
+
 
 /// `Xplore` struct represents the core components needed for the application.
 /// It contains the client for making requests and the authentication details.

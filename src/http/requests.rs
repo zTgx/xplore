@@ -31,26 +31,6 @@ where
     }
 }
 
-pub async fn get_guest_token(client: &Client, bearer_token: &str) -> Result<String> {
-    let mut headers = HeaderMap::new();
-    headers.insert("Authorization", format!("Bearer {}", bearer_token).parse().unwrap());
-
-    let (response, _) = request_api::<serde_json::Value>(
-        client,
-        "https://api.twitter.com/1.1/guest/activate.json",
-        headers,
-        Method::POST,
-        None,
-    )
-    .await?;
-
-    response
-        .get("guest_token")
-        .and_then(|token| token.as_str())
-        .map(String::from)
-        .ok_or_else(|| crate::error::TwitterError::Auth("Failed to get guest token".into()))
-}
-
 pub async fn request_multipart_api<T>(
     client: &Client,
     url: &str,
