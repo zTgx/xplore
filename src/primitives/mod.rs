@@ -12,3 +12,5 @@ pub use rel::*;
 
 mod auth;
 pub use auth::*;
+
+pub mod endpoints;

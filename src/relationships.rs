@@ -1,85 +1,84 @@
 use crate::error::Result;
-use crate::http::requests::request_api;
-use crate::http::requests::request_form_api;
 use crate::primitives::Profile;
-use crate::primitives::RelationshipTimeline;
-use crate::primitives::TimelineInstruction;
-use crate::timeline::v1::QueryProfilesResponse;
+use crate::IProfile;
+use crate::IRel;
 use crate::Xplore;
-use chrono::{DateTime, Utc};
-use reqwest::Method;
-use serde_json::{json, Value};
+use async_trait::async_trait;
+use serde_json::Value;
 
-impl Xplore {
-    pub async fn get_following(
+#[async_trait]
+impl IRel for Xplore {
+    async fn following(
         &self,
         user_id: &str,
         count: i32,
         cursor: Option<String>,
     ) -> Result<(Vec<Profile>, Option<String>)> {
-        let response = self.fetch_profile_following(user_id, count, cursor).await?;
+        let response = rel_utils::fetch_profile_following(self, user_id, count, cursor).await?;
         Ok((response.profiles, response.next))
     }
-    pub async fn get_followers(
+
+    async fn followers(
         &self,
         user_id: &str,
         count: i32,
         cursor: Option<String>,
     ) -> Result<(Vec<Profile>, Option<String>)> {
-        let response = self.fetch_profile_following(user_id, count, cursor).await?;
+        let response = rel_utils::fetch_profile_following(self, user_id, count, cursor).await?;
         Ok((response.profiles, response.next))
     }
+
+    async fn follow(&self, username: &str) -> Result<()> {
+        let user_id = self.get_user_id(username).await?;
+
+        let url = "https://api.twitter.com/1.1/friendships/create.json";
+
+        let form = vec![
+            ("include_profile_interstitial_type".to_string(), "1".to_string()),
+            ("skip_status".to_string(), "true".to_string()),
+            ("user_id".to_string(), user_id),
+        ];
+
+        let _ = self.inner.rpc.request_form::<Value>(url, username, form).await?;
+
+        Ok(())
+    }
+
+    async fn unfollow(&self, username: &str) -> Result<()> {
+        let user_id = self.get_user_id(username).await?;
+
+        let url = "https://api.twitter.com/1.1/friendships/destroy.json";
+
+        let form = vec![
+            ("include_profile_interstitial_type".to_string(), "1".to_string()),
+            ("skip_status".to_string(), "true".to_string()),
+            ("user_id".to_string(), user_id),
+        ];
+
+        let (_, _) = self.inner.rpc.request_form::<Value>(url, username, form).await?;
+
+        Ok(())
+    }
+}
+
+mod rel_utils {
+
+    use crate::error::Result;
+    use crate::primitives::{Profile, TimelineInstruction};
+    use crate::timeline::home::get_following_timeline;
+    use crate::Xplore;
+    use crate::{primitives::RelationshipTimeline, timeline::v1::QueryProfilesResponse};
+    use chrono::{DateTime, Utc};
 
     pub async fn fetch_profile_following(
-        &self,
+        xyz: &Xplore,
         user_id: &str,
         max_profiles: i32,
         cursor: Option<String>,
     ) -> Result<QueryProfilesResponse> {
-        let timeline = self.get_following_timeline(user_id, max_profiles, cursor).await?;
+        let timeline = get_following_timeline(xyz, user_id, max_profiles, cursor).await?;
 
-        Ok(Self::parse_relationship_timeline(&timeline))
-    }
-
-    async fn get_following_timeline(
-        &self,
-        user_id: &str,
-        max_items: i32,
-        cursor: Option<String>,
-    ) -> Result<RelationshipTimeline> {
-        let count = if max_items > 50 { 50 } else { max_items };
-
-        let mut variables = json!({
-            "userId": user_id,
-            "count": count,
-            "includePromotedContent": false,
-        });
-
-        if let Some(cursor_val) = cursor {
-            if !cursor_val.is_empty() {
-                variables["cursor"] = json!(cursor_val);
-            }
-        }
-
-        let features = json!({
-            "responsive_web_twitter_article_tweet_consumption_enabled": false,
-            "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": true,
-            "longform_notetweets_inline_media_enabled": true,
-            "responsive_web_media_download_video_enabled": false,
-        });
-
-        let url = format!(
-            "https://twitter.com/i/api/graphql/iSicc7LrzWGBgDPL0tM_TQ/Following?variables={}&features={}",
-            urlencoding::encode(&variables.to_string()),
-            urlencoding::encode(&features.to_string())
-        );
-
-        let mut headers = reqwest::header::HeaderMap::new();
-        self.auth.install_headers(&mut headers).await?;
-
-        let (_data, _) = request_api::<RelationshipTimeline>(&self.client, &url, headers, Method::GET, None).await?;
-
-        Ok(_data)
+        Ok(parse_relationship_timeline(&timeline))
     }
 
     fn parse_relationship_timeline(timeline: &RelationshipTimeline) -> QueryProfilesResponse {
@@ -156,55 +155,5 @@ impl Xplore {
         }
 
         QueryProfilesResponse { profiles, next: next_cursor, previous: previous_cursor }
-    }
-
-    pub async fn follow_user(&self, username: &str) -> Result<()> {
-        let user_id = self.get_user_id_by_screen_name(username).await?;
-
-        let url = "https://api.twitter.com/1.1/friendships/create.json";
-
-        let form = vec![
-            ("include_profile_interstitial_type".to_string(), "1".to_string()),
-            ("skip_status".to_string(), "true".to_string()),
-            ("user_id".to_string(), user_id),
-        ];
-
-        let mut headers = reqwest::header::HeaderMap::new();
-        self.auth.install_headers(&mut headers).await?;
-
-        headers.insert("Content-Type", "application/x-www-form-urlencoded".parse().unwrap());
-        headers.insert("Referer", format!("https://twitter.com/{}", username).parse().unwrap());
-        headers.insert("X-Twitter-Active-User", "yes".parse().unwrap());
-        headers.insert("X-Twitter-Auth-Type", "OAuth2Session".parse().unwrap());
-        headers.insert("X-Twitter-Client-Language", "en".parse().unwrap());
-
-        let (_, _) = request_form_api::<Value>(&self.client, url, headers, form).await?;
-
-        Ok(())
-    }
-
-    pub async fn unfollow_user(&self, username: &str) -> Result<()> {
-        let user_id = self.get_user_id_by_screen_name(username).await?;
-
-        let url = "https://api.twitter.com/1.1/friendships/destroy.json";
-
-        let form = vec![
-            ("include_profile_interstitial_type".to_string(), "1".to_string()),
-            ("skip_status".to_string(), "true".to_string()),
-            ("user_id".to_string(), user_id),
-        ];
-
-        let mut headers = reqwest::header::HeaderMap::new();
-        self.auth.install_headers(&mut headers).await?;
-
-        headers.insert("Content-Type", "application/x-www-form-urlencoded".parse().unwrap());
-        headers.insert("Referer", format!("https://twitter.com/{}", username).parse().unwrap());
-        headers.insert("X-Twitter-Active-User", "yes".parse().unwrap());
-        headers.insert("X-Twitter-Auth-Type", "OAuth2Session".parse().unwrap());
-        headers.insert("X-Twitter-Client-Language", "en".parse().unwrap());
-
-        let (_, _) = request_form_api::<Value>(&self.client, url, headers, form).await?;
-
-        Ok(())
     }
 }

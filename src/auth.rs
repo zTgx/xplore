@@ -1,11 +1,13 @@
 use crate::error::{Result, TwitterError};
-use crate::http::requests::request_api;
 use crate::primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN};
+use crate::Xplore;
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
-use reqwest::header::{HeaderMap, HeaderValue};
-use reqwest::Client;
-use serde_json::json;
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    Method,
+};
+use serde_json::{json, Value};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
@@ -32,8 +34,8 @@ impl UserAuth {
         })
     }
 
-    async fn init_login(&mut self, client: &Client) -> Result<FlowResponse> {
-        self.update_guest_token(client).await?;
+    async fn init_login(&mut self, xplore: &Xplore) -> Result<FlowResponse> {
+        self.update_guest_token(xplore).await?;
 
         let init_request = FlowInitRequest {
             flow_name: "login".to_string(),
@@ -47,33 +49,18 @@ impl UserAuth {
             }),
         };
 
-        let mut headers = HeaderMap::new();
-        self.install_headers(&mut headers).await?;
-
-        let (response, _) = request_api(
-            client,
-            "https://api.twitter.com/1.1/onboarding/task.json",
-            headers,
-            reqwest::Method::POST,
-            Some(json!(init_request)),
-        )
-        .await?;
+        let url = "https://api.twitter.com/1.1/onboarding/task.json";
+        let body = Some(json!(init_request));
+        let (response, _) = xplore.inner.rpc.send_request(url, Method::POST, body).await?;
 
         Ok(response)
     }
 
-    async fn execute_flow_task(&self, client: &Client, request: FlowTaskRequest) -> Result<FlowResponse> {
-        let mut headers = HeaderMap::new();
-        self.install_headers(&mut headers).await?;
-
-        let (flow_response, raw_response) = request_api::<FlowResponse>(
-            client,
-            "https://api.twitter.com/1.1/onboarding/task.json",
-            headers,
-            reqwest::Method::POST,
-            Some(json!(request)),
-        )
-        .await?;
+    async fn execute_flow_task(&self, xplore: &Xplore, request: FlowTaskRequest) -> Result<FlowResponse> {
+        let url = "https://api.twitter.com/1.1/onboarding/task.json";
+        let body = Some(json!(request));
+        let (flow_response, raw_response) =
+            xplore.inner.rpc.send_request::<FlowResponse>(url, Method::POST, body).await?;
 
         let mut cookie_jar = self.cookie_jar.lock().await;
         for cookie_header in raw_response.get_all("set-cookie") {
@@ -95,50 +82,50 @@ impl UserAuth {
 
     pub async fn login(
         &mut self,
-        client: &Client,
+        xplore: &Xplore,
         username: &str,
         password: &str,
         email: Option<&str>,
         two_factor_secret: Option<&str>,
     ) -> Result<()> {
-        let mut flow_response = self.init_login(client).await?;
+        let mut flow_response = self.init_login(xplore).await?;
         let mut flow_token = flow_response.flow_token;
 
         while let Some(subtasks) = &flow_response.subtasks {
             if let Some(subtask) = subtasks.first() {
                 flow_response = match SubtaskType::from(subtask.subtask_id.as_str()) {
                     SubtaskType::LoginJsInstrumentation => {
-                        self.handle_js_instrumentation_subtask(client, flow_token).await?
+                        self.handle_js_instrumentation_subtask(xplore, flow_token).await?
                     }
                     SubtaskType::LoginEnterUserIdentifier => {
-                        self.handle_username_input(client, flow_token, username).await?
+                        self.handle_username_input(xplore, flow_token, username).await?
                     }
-                    SubtaskType::LoginEnterPassword => self.handle_password_input(client, flow_token, password).await?,
+                    SubtaskType::LoginEnterPassword => self.handle_password_input(xplore, flow_token, password).await?,
                     SubtaskType::LoginAcid => {
                         if let Some(email_str) = email {
-                            self.handle_email_verification(client, flow_token, email_str).await?
+                            self.handle_email_verification(xplore, flow_token, email_str).await?
                         } else {
                             return Err(TwitterError::Auth("Email required for verification".into()));
                         }
                     }
                     SubtaskType::AccountDuplicationCheck => {
-                        self.handle_account_duplication_check(client, flow_token).await?
+                        self.handle_account_duplication_check(xplore, flow_token).await?
                     }
                     SubtaskType::LoginTwoFactorAuthChallenge => {
                         if let Some(secret) = two_factor_secret {
-                            self.handle_two_factor_auth(client, flow_token, secret).await?
+                            self.handle_two_factor_auth(xplore, flow_token, secret).await?
                         } else {
                             return Err(TwitterError::Auth("Two factor authentication required".into()));
                         }
                     }
                     SubtaskType::LoginEnterAlternateIdentifier => {
                         if let Some(email_str) = email {
-                            self.handle_alternate_identifier(client, flow_token, email_str).await?
+                            self.handle_alternate_identifier(xplore, flow_token, email_str).await?
                         } else {
                             return Err(TwitterError::Auth("Email required for alternate identifier".into()));
                         }
                     }
-                    SubtaskType::LoginSuccess => self.handle_success_subtask(client, flow_token).await?,
+                    SubtaskType::LoginSuccess => self.handle_success_subtask(xplore, flow_token).await?,
                     SubtaskType::DenyLogin => {
                         return Err(TwitterError::Auth("Login denied".into()));
                     }
@@ -155,7 +142,7 @@ impl UserAuth {
         Ok(())
     }
 
-    async fn handle_js_instrumentation_subtask(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_js_instrumentation_subtask(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -166,10 +153,10 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_username_input(&self, client: &Client, flow_token: String, username: &str) -> Result<FlowResponse> {
+    async fn handle_username_input(&self, xplore: &Xplore, flow_token: String, username: &str) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -189,10 +176,10 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_password_input(&self, client: &Client, flow_token: String, password: &str) -> Result<FlowResponse> {
+    async fn handle_password_input(&self, xplore: &Xplore, flow_token: String, password: &str) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -203,12 +190,12 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
     async fn handle_email_verification(
         &self,
-        client: &Client,
+        xplore: &Xplore,
         flow_token: String,
         email: &str,
     ) -> Result<FlowResponse> {
@@ -222,10 +209,10 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_account_duplication_check(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_account_duplication_check(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -235,10 +222,10 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_two_factor_auth(&self, client: &Client, flow_token: String, secret: &str) -> Result<FlowResponse> {
+    async fn handle_two_factor_auth(&self, xplore: &Xplore, flow_token: String, secret: &str) -> Result<FlowResponse> {
         let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret.as_bytes().to_vec())
             .map_err(|e| TwitterError::Auth(format!("Failed to create TOTP: {}", e)))?;
 
@@ -255,12 +242,12 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
     async fn handle_alternate_identifier(
         &self,
-        client: &Client,
+        xplore: &Xplore,
         flow_token: String,
         email: &str,
     ) -> Result<FlowResponse> {
@@ -274,15 +261,15 @@ impl UserAuth {
                 }
             })],
         };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_success_subtask(&self, client: &Client, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_success_subtask(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest { flow_token, subtask_inputs: vec![] };
-        self.execute_flow_task(client, request).await
+        self.execute_flow_task(xplore, request).await
     }
 
-    async fn update_guest_token(&mut self, client: &Client) -> Result<()> {
+    async fn update_guest_token(&mut self, xplore: &Xplore) -> Result<()> {
         let url = "https://api.twitter.com/1.1/guest/activate.json";
 
         let mut headers = HeaderMap::new();
@@ -292,7 +279,7 @@ impl UserAuth {
                 .map_err(|e| TwitterError::Auth(e.to_string()))?,
         );
 
-        let (response, _) = request_api::<serde_json::Value>(client, url, headers, reqwest::Method::POST, None).await?;
+        let (response, _) = xplore.inner.rpc.send_request::<Value>(url, Method::POST, None).await?;
 
         let guest_token = response
             .get("guest_token")
@@ -436,18 +423,13 @@ impl UserAuth {
         Ok(())
     }
 
-    pub async fn is_logged_in(&self, client: &Client) -> Result<bool> {
+    pub async fn is_logged_in(&self, xplore: &Xplore) -> Result<bool> {
         let mut headers = HeaderMap::new();
         self.install_headers(&mut headers).await?;
 
-        let (response, _) = request_api::<serde_json::Value>(
-            client,
-            "https://api.twitter.com/1.1/account/verify_credentials.json",
-            headers,
-            reqwest::Method::GET,
-            None,
-        )
-        .await?;
+        let url = "https://api.twitter.com/1.1/account/verify_credentials.json";
+
+        let (response, _) = xplore.inner.rpc.send_request::<Value>(url, Method::GET, None).await?;
 
         if let Some(errors) = response.get("errors") {
             if let Some(errors_array) = errors.as_array() {
