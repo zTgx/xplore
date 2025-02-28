@@ -47,6 +47,7 @@ impl IXYZProfile for XYZ {
     }
 }
 
+#[allow(dead_code)]
 mod profile_utils {
     use serde_json::{json, Value};
 

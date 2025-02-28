@@ -6,7 +6,7 @@ use crate::timeline::v2::parse_threaded_conversation;
 use crate::timeline::v2::parse_timeline_tweets_v2;
 use crate::timeline::v2::QueryTweetsResponse;
 use crate::timeline::v2::ThreadedConversation;
-use crate::Xplore;
+use crate::{IXYZProfile, Xplore, XYZ};
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
@@ -68,19 +68,16 @@ pub async fn fetch_tweets(client: &Xplore, user_id: &str, max_tweets: i32, curso
 }
 
 pub async fn fetch_tweets_and_replies(
-    client: &Xplore,
+    xyz: &XYZ,
     username: &str,
     max_tweets: i32,
     cursor: Option<&str>,
 ) -> Result<QueryTweetsResponse> {
-    let mut headers = HeaderMap::new();
-    client.auth.install_headers(&mut headers).await?;
-
-    let user_id = client.get_user_id_by_screen_name(username).await?;
+    let user_id = xyz.get_user_id(username).await?;
 
     let endpoint = Endpoints::user_tweets_and_replies(&user_id, max_tweets.min(40), cursor);
-
-    let (value, _headers) = request_api(&client.client, &endpoint.to_request_url(), headers, Method::GET, None).await?;
+    let url = &endpoint.to_request_url();
+    let (value, _) = xyz.inner.rpc.send_request(url, Method::GET, None).await?;
 
     let parsed_response = parse_timeline_tweets_v2(&value);
     Ok(parsed_response)

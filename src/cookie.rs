@@ -2,8 +2,8 @@ use crate::error::Result;
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
 use std::fs;
 
-pub(crate) struct CookieTracker {
-    pub(crate) cookie: String,
+pub struct CookieTracker {
+    pub cookie: String,
     file_path: String,
 }
 
