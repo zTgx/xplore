@@ -56,14 +56,6 @@ impl Scraper {
         crate::tweets::fetch_list_tweets(&self.twitter_client, list_id, max_tweets, cursor).await
     }
 
-    pub async fn like_tweet(&self, tweet_id: &str) -> Result<Value> {
-        crate::tweets::like_tweet(&self.twitter_client, tweet_id).await
-    }
-
-    pub async fn retweet(&self, tweet_id: &str) -> Result<Value> {
-        crate::tweets::retweet(&self.twitter_client, tweet_id).await
-    }
-
     pub async fn create_long_tweet(
         &self,
         text: &str,
@@ -71,37 +63,5 @@ impl Scraper {
         media_ids: Option<Vec<String>>,
     ) -> Result<Value> {
         crate::tweets::create_long_tweet(&self.twitter_client, text, reply_to, media_ids).await
-    }
-
-    pub async fn get_tweet(&self, id: &str) -> Result<Tweet> {
-        crate::tweets::get_tweet(&self.twitter_client, id).await
-    }
-
-    pub async fn search_tweets(
-        &self,
-        query: &str,
-        max_tweets: i32,
-        search_mode: SearchMode,
-        cursor: Option<String>,
-    ) -> Result<QueryTweetsResponse> {
-        fetch_search_tweets(&self.twitter_client, query, max_tweets, search_mode, cursor).await
-    }
-
-    pub async fn search_profiles(
-        &self,
-        query: &str,
-        max_profiles: i32,
-        cursor: Option<String>,
-    ) -> Result<QueryProfilesResponse> {
-        crate::search::search_profiles(&self.twitter_client, query, max_profiles, cursor).await
-    }
-
-    pub async fn get_user_tweets(
-        &self,
-        user_id: &str,
-        count: i32,
-        cursor: Option<String>,
-    ) -> Result<V2QueryTweetsResponse> {
-        crate::tweets::fetch_user_tweets(&self.twitter_client, user_id, count, cursor.as_deref()).await
     }
 }
