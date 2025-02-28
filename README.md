@@ -37,14 +37,12 @@ use xplore::{IProfile, Xplore};
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let screen_name = "zTgx5";
 
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
 
     let xplore = Xplore::new(&cookie).await.unwrap();
-    let profile_data = xplore.get_profile_by_screen_name(screen_name).await.unwrap();
-
-    println!("{:#?}", profile_data);
+    let user_id = xplore.get_user_id("zTgx5").await.unwrap();
+    println!("user id: {user_id}");
 }
 ```
 
