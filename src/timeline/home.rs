@@ -1,10 +1,11 @@
 use crate::error::Result;
 use crate::http::requests::request_api;
-use crate::Xplore;
+use crate::primitives::RelationshipTimeline;
+use crate::{Xplore, XYZ};
 use reqwest::header::HeaderMap;
 use reqwest::Method;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{json, Value};
 use urlencoding;
 
 #[derive(Debug, Deserialize)]
@@ -127,4 +128,42 @@ pub async fn fetch_home_timeline(client: &Xplore, count: i32, seen_tweet_ids: Ve
     }
 
     Ok(entries)
+}
+
+pub async fn get_following_timeline(
+    xyz: &XYZ,
+    user_id: &str,
+    max_items: i32,
+    cursor: Option<String>,
+) -> Result<RelationshipTimeline> {
+    let count = if max_items > 50 { 50 } else { max_items };
+
+    let mut variables = json!({
+        "userId": user_id,
+        "count": count,
+        "includePromotedContent": false,
+    });
+
+    if let Some(cursor_val) = cursor {
+        if !cursor_val.is_empty() {
+            variables["cursor"] = json!(cursor_val);
+        }
+    }
+
+    let features = json!({
+        "responsive_web_twitter_article_tweet_consumption_enabled": false,
+        "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": true,
+        "longform_notetweets_inline_media_enabled": true,
+        "responsive_web_media_download_video_enabled": false,
+    });
+
+    let url = format!(
+        "https://twitter.com/i/api/graphql/iSicc7LrzWGBgDPL0tM_TQ/Following?variables={}&features={}",
+        urlencoding::encode(&variables.to_string()),
+        urlencoding::encode(&features.to_string())
+    );
+
+    let (data, _) = xyz.inner.rpc.send_request::<RelationshipTimeline>(&url, Method::GET, None).await?;
+
+    Ok(data)
 }
