@@ -1,16 +1,12 @@
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
 
-
-
 pub(crate) struct CookieTracker {
-    pub(crate) cookie: String,   
+    pub(crate) cookie: String,
 }
 
 impl CookieTracker {
     pub fn new(cookie: &str) -> Self {
-        CookieTracker {
-            cookie: cookie.to_string()
-        }
+        CookieTracker { cookie: cookie.to_string() }
     }
 
     pub fn get_cookie(&self) -> &str {

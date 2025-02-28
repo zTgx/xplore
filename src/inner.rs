@@ -11,9 +11,6 @@ impl Inner {
 
         let rpc = InnerRpc::new(cookie).await?;
 
-        Ok(Inner {
-            cookie_tracker,
-            rpc,
-        })
+        Ok(Inner { cookie_tracker, rpc })
     }
 }

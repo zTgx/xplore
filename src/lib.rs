@@ -4,7 +4,9 @@ use auth::UserAuth;
 use inner::Inner;
 use primitives::{Profile, Tweet, TweetRetweetResponse};
 use reqwest::Client;
+use search::SearchMode;
 use serde_json::Value;
+use timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
 
 pub mod auth;
 pub mod error;
@@ -44,6 +46,23 @@ pub trait IXYZTweet {
     async fn post_tweet(&self, text: &str);
 }
 
+#[async_trait]
+pub trait ISearch {
+    async fn search_tweets(
+        &self,
+        query: &str,
+        max_tweets: i32,
+        search_mode: SearchMode,
+        cursor: Option<String>,
+    ) -> Result<QueryTweetsResponse>;
+
+    async fn search_profiles(
+        &self,
+        query: &str,
+        max_profiles: i32,
+        cursor: Option<String>,
+    ) -> Result<QueryProfilesResponse>;
+}
 
 /// `Xplore` struct represents the core components needed for the application.
 /// It contains the client for making requests and the authentication details.

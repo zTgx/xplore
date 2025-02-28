@@ -1,10 +1,16 @@
-
-use reqwest::{header::{HeaderMap, HeaderValue}, multipart::Form, Client};
+use crate::{
+    auth::UserAuth,
+    error::{Result, TwitterError},
+};
+use reqwest::Method;
+use reqwest::{
+    header::{HeaderMap, HeaderValue},
+    multipart::Form,
+    Client,
+};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::time::Duration;
-use reqwest::Method;
-use crate::{auth::UserAuth, error::{Result, TwitterError}};
 
 pub(crate) struct InnerRpc {
     pub client: Client,
@@ -22,28 +28,26 @@ impl InnerRpc {
         let mut auth = UserAuth::new().await?;
         auth.set_from_cookie_string(cookie).await?;
 
-        Ok(Self {
-            client,
-            auth,
-        })
+        Ok(Self { client, auth })
     }
 }
 
 impl InnerRpc {
     pub async fn send_request<T>(&self, url: &str, method: Method, body: Option<Value>) -> Result<(T, HeaderMap)>
     where
-    T: DeserializeOwned, {
+        T: DeserializeOwned,
+    {
         let mut headers = HeaderMap::new();
         self.auth.install_headers(&mut headers).await?;
-        
+
         let mut request = self.client.request(method, url).headers(headers);
 
         if let Some(json_body) = body {
             request = request.json(&json_body);
         }
-    
+
         let response = request.send().await?;
-    
+
         if response.status().is_success() {
             let headers = response.headers().clone();
             let text = response.text().await?;
@@ -55,11 +59,7 @@ impl InnerRpc {
         }
     }
 
-    pub async fn request_multipart<T>(
-        &self,
-        url: &str,
-        form: Form,
-    ) -> Result<(T, HeaderMap)>
+    pub async fn request_multipart<T>(&self, url: &str, form: Form) -> Result<(T, HeaderMap)>
     where
         T: DeserializeOwned,
     {
@@ -67,9 +67,9 @@ impl InnerRpc {
         self.auth.install_headers(&mut headers).await?;
 
         let request = self.client.request(Method::POST, url).headers(headers).multipart(form);
-    
+
         let response = request.send().await?;
-    
+
         if response.status().is_success() {
             let headers = response.headers().clone();
             let text = response.text().await?;
@@ -79,7 +79,7 @@ impl InnerRpc {
             Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
-    
+
     pub async fn request_form<T>(
         &self,
         url: &str,
@@ -99,9 +99,9 @@ impl InnerRpc {
         headers.insert("X-Twitter-Client-Language", "en".parse().unwrap());
 
         let request = self.client.request(Method::POST, url).headers(headers).form(&form_data);
-    
+
         let response = request.send().await?;
-    
+
         if response.status().is_success() {
             let headers = response.headers().clone();
             let text = response.text().await?;

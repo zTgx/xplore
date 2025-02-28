@@ -3,8 +3,8 @@ use crate::primitives::Profile;
 use crate::primitives::RelationshipTimeline;
 use crate::primitives::TimelineInstruction;
 use crate::timeline::v1::QueryProfilesResponse;
-use crate::XYZ;
 use crate::IXYZProfile;
+use crate::XYZ;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde_json::{json, Value};
@@ -165,7 +165,7 @@ impl XYZ {
             ("user_id".to_string(), user_id),
         ];
 
-        let _= self.inner.rpc.request_form::<Value>(url, username, form).await?;
+        let _ = self.inner.rpc.request_form::<Value>(url, username, form).await?;
 
         Ok(())
     }
