@@ -1,12 +1,15 @@
+use crate::error::Result;
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
+use std::fs;
 
 pub(crate) struct CookieTracker {
     pub(crate) cookie: String,
+    file_path: String,
 }
 
 impl CookieTracker {
     pub fn new(cookie: &str) -> Self {
-        CookieTracker { cookie: cookie.to_string() }
+        CookieTracker { cookie: cookie.to_string(), file_path: ".".to_string() }
     }
 
     pub fn get_cookie(&self) -> &str {
@@ -29,5 +32,16 @@ impl CookieTracker {
         if self.is_valid() {
             headers.insert(COOKIE, HeaderValue::from_str(&self.cookie).unwrap());
         }
+    }
+
+    pub async fn sync(&self) -> Result<()> {
+        fs::write(&self.file_path, &self.cookie)?;
+        Ok(())
+    }
+
+    pub async fn load_from_file(&mut self) -> Result<()> {
+        let cookie = fs::read_to_string(&self.file_path)?;
+        self.cookie = cookie;
+        Ok(())
     }
 }

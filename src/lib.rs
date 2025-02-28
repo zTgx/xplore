@@ -1,6 +1,7 @@
 use crate::error::Result;
 use async_trait::async_trait;
 use auth::UserAuth;
+use cookie::CookieTracker;
 use inner::Inner;
 use primitives::{Profile, Tweet, TweetRetweetResponse};
 use reqwest::Client;
@@ -25,13 +26,15 @@ pub mod rpc;
 // #[derive(Clone)]
 pub struct XYZ {
     inner: Inner,
+    pub cookie_tracker: CookieTracker,
 }
 
 impl XYZ {
     pub async fn new(cookie: &str) -> Result<Self> {
         let inner = Inner::new(cookie).await?;
+        let cookie_tracker = CookieTracker::new(cookie);
 
-        Ok(Self { inner })
+        Ok(Self { inner, cookie_tracker })
     }
 }
 

@@ -14,20 +14,6 @@ pub struct Scraper {
 }
 
 impl Scraper {
-
-
-    pub async fn get_profile(&self, username: &str) -> Result<crate::primitives::Profile> {
-        crate::profile::get_profile(&self.twitter_client, username).await
-    }
-    pub async fn send_tweet(
-        &self,
-        text: &str,
-        reply_to: Option<&str>,
-        media_data: Option<Vec<(Vec<u8>, String)>>,
-    ) -> Result<Value> {
-        crate::tweets::create_tweet_request(&self.twitter_client, text, reply_to, media_data).await
-    }
-
     pub async fn get_home_timeline(
         &self,
         count: i32,
