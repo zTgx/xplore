@@ -1,13 +1,13 @@
 use crate::error::Result;
 use crate::primitives::Profile;
+use crate::IProfile;
 use crate::IRel;
-use crate::IXYZProfile;
-use crate::XYZ;
+use crate::Xplore;
 use async_trait::async_trait;
 use serde_json::Value;
 
 #[async_trait]
-impl IRel for XYZ {
+impl IRel for Xplore {
     async fn following(
         &self,
         user_id: &str,
@@ -66,12 +66,12 @@ mod rel_utils {
     use crate::error::Result;
     use crate::primitives::{Profile, TimelineInstruction};
     use crate::timeline::home::get_following_timeline;
-    use crate::XYZ;
+    use crate::Xplore;
     use crate::{primitives::RelationshipTimeline, timeline::v1::QueryProfilesResponse};
     use chrono::{DateTime, Utc};
 
     pub async fn fetch_profile_following(
-        xyz: &XYZ,
+        xyz: &Xplore,
         user_id: &str,
         max_profiles: i32,
         cursor: Option<String>,

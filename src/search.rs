@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
-use crate::{ISearch, XYZ};
+use crate::{ISearch, Xplore};
 use async_trait::async_trait;
 
 #[derive(Debug, Clone, Copy)]
@@ -13,7 +13,7 @@ pub enum SearchMode {
 }
 
 #[async_trait]
-impl ISearch for XYZ {
+impl ISearch for Xplore {
     async fn search_tweets(
         &self,
         query: &str,
@@ -45,7 +45,7 @@ mod search_utils {
     use crate::primitives::Profile;
     use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
     use crate::timeline::v2::{parse_legacy_tweet, SearchEntryRaw};
-    use crate::XYZ;
+    use crate::Xplore;
     use lazy_static::lazy_static;
     use reqwest::Method;
     use serde::Deserialize;
@@ -90,7 +90,7 @@ mod search_utils {
     }
 
     pub(crate) async fn get_search_timeline(
-        xyz: &XYZ,
+        xyz: &Xplore,
         query: &str,
         max_items: i32,
         search_mode: SearchMode,

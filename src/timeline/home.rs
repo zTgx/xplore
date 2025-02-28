@@ -1,8 +1,6 @@
 use crate::error::Result;
-use crate::http::requests::request_api;
 use crate::primitives::RelationshipTimeline;
-use crate::{Xplore, XYZ};
-use reqwest::header::HeaderMap;
+use crate::Xplore;
 use reqwest::Method;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -58,7 +56,7 @@ pub struct TweetResults {
     pub result: Option<Value>,
 }
 
-pub async fn fetch_home_timeline(client: &Xplore, count: i32, seen_tweet_ids: Vec<String>) -> Result<Vec<Value>> {
+pub async fn fetch_home_timeline(xplore: &Xplore, count: i32, seen_tweet_ids: Vec<String>) -> Result<Vec<Value>> {
     let variables = serde_json::json!({
         "count": count,
         "includePromotedContent": true,
@@ -100,10 +98,7 @@ pub async fn fetch_home_timeline(client: &Xplore, count: i32, seen_tweet_ids: Ve
         urlencoding::encode(&features.to_string())
     );
 
-    let mut headers = HeaderMap::new();
-    client.auth.install_headers(&mut headers).await?;
-
-    let (response, _) = request_api::<HomeTimelineResponse>(&client.client, &url, headers, Method::GET, None).await?;
+    let (response, _) = xplore.inner.rpc.send_request::<HomeTimelineResponse>(&url, Method::GET, None).await?;
 
     let home = response.data.map(|data| data.home.home_timeline.instructions);
 
@@ -131,7 +126,7 @@ pub async fn fetch_home_timeline(client: &Xplore, count: i32, seen_tweet_ids: Ve
 }
 
 pub async fn get_following_timeline(
-    xyz: &XYZ,
+    xplore: &Xplore,
     user_id: &str,
     max_items: i32,
     cursor: Option<String>,
@@ -163,7 +158,7 @@ pub async fn get_following_timeline(
         urlencoding::encode(&features.to_string())
     );
 
-    let (data, _) = xyz.inner.rpc.send_request::<RelationshipTimeline>(&url, Method::GET, None).await?;
+    let (data, _) = xplore.inner.rpc.send_request::<RelationshipTimeline>(&url, Method::GET, None).await?;
 
     Ok(data)
 }

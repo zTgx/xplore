@@ -59,7 +59,6 @@ impl InnerRpc {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn request_multipart<T>(&self, url: &str, form: Form) -> Result<(T, HeaderMap)>
     where
         T: DeserializeOwned,

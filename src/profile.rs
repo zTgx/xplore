@@ -1,12 +1,12 @@
 use crate::error::{Result, TwitterError};
 use crate::primitives::constants::URL_USER_BY_SCREEN_NAME;
 use crate::primitives::profile::*;
-use crate::{IXYZProfile, XYZ};
+use crate::{IProfile, Xplore};
 use async_trait::async_trait;
 use reqwest::Method;
 
 #[async_trait]
-impl IXYZProfile for XYZ {
+impl IProfile for Xplore {
     async fn get_profile(&self, screen_name: &str) -> Result<Profile> {
         let body = profile_utils::screen_name_body(screen_name);
         let response = self.inner.rpc.send_request::<UserRaw>(URL_USER_BY_SCREEN_NAME, Method::GET, body).await?;
