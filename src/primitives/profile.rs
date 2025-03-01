@@ -173,6 +173,17 @@ impl From<(&LegacyUserRaw, Option<bool>)> for Profile {
             .and_then(|first_url| first_url.expanded_url.as_ref())
             .map(|expanded_url| profile.url = Some(expanded_url.clone()));
 
+        if let Some(expanded_url) = user
+            .entities
+            .as_ref()
+            .and_then(|entities| entities.url.as_ref())
+            .and_then(|url_entity| url_entity.urls.as_ref())
+            .and_then(|urls| urls.first())
+            .and_then(|first_url| first_url.expanded_url.as_ref())
+        {
+            profile.url = Some(expanded_url.clone())
+        }
+
         profile
     }
 }

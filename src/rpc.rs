@@ -22,7 +22,7 @@ impl InnerRpc {
             .timeout(Duration::from_secs(30))
             .cookie_store(true)
             .build()
-            .map_err(|e| TwitterError::Network(e))?;
+            .map_err(TwitterError::Network)?;
 
         let mut auth = UserAuth::new().await?;
         auth.set_from_cookie_string(cookie).await?;

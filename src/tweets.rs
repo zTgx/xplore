@@ -310,7 +310,7 @@ async fn upload_video_in_chunks(xplore: &Xplore, file_data: Vec<u8>, media_type:
         "total_bytes": file_data.len(),
         "media_type": media_type
     }));
-    let (init_response, _) = xplore.inner.rpc.send_request::<Value>(&upload_url, Method::POST, body).await?;
+    let (init_response, _) = xplore.inner.rpc.send_request::<Value>(upload_url, Method::POST, body).await?;
 
     let media_id = init_response["media_id_string"]
         .as_str()
@@ -319,9 +319,8 @@ async fn upload_video_in_chunks(xplore: &Xplore, file_data: Vec<u8>, media_type:
 
     // APPEND command - upload in chunks
     let chunk_size = 5 * 1024 * 1024; // 5MB chunks
-    let mut segment_index = 0;
 
-    for chunk in file_data.chunks(chunk_size) {
+    for (segment_index, chunk) in file_data.chunks(chunk_size).enumerate() {
         let form = reqwest::multipart::Form::new()
             .text("command", "APPEND")
             .text("media_id", media_id.clone())
@@ -329,8 +328,6 @@ async fn upload_video_in_chunks(xplore: &Xplore, file_data: Vec<u8>, media_type:
             .part("media", reqwest::multipart::Part::bytes(chunk.to_vec()));
 
         let _ = xplore.inner.rpc.request_multipart::<Value>(upload_url, form).await?;
-
-        segment_index += 1;
     }
 
     // FINALIZE command
