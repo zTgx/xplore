@@ -1,4 +1,4 @@
-use crate::error::TwitterError;
+use crate::TwitterError;
 use serde::Deserialize;
 use serde_json::Value;
 

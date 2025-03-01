@@ -1,7 +1,7 @@
-use crate::error::{Result, TwitterError};
-use crate::primitives::constants::URL_USER_BY_SCREEN_NAME;
-use crate::primitives::profile::*;
-use crate::{IProfile, Xplore};
+use crate::{
+    primitives::{constants::URL_USER_BY_SCREEN_NAME, profile::*},
+    IProfile, Result, TwitterError, Xplore,
+};
 use async_trait::async_trait;
 use reqwest::Method;
 

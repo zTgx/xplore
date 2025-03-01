@@ -1,12 +1,8 @@
-use crate::error::{Result, TwitterError};
-use crate::primitives::endpoints::Endpoints;
-use crate::primitives::tweets::Tweet;
-use crate::primitives::TweetRetweetResponse;
-use crate::timeline::v2::parse_threaded_conversation;
-use crate::timeline::v2::parse_timeline_tweets_v2;
-use crate::timeline::v2::QueryTweetsResponse;
-use crate::timeline::v2::ThreadedConversation;
-use crate::{IProfile, ITweet, Xplore};
+use crate::{
+    primitives::{endpoints::Endpoints, tweets::Tweet, TweetRetweetResponse},
+    timeline::v2::{parse_threaded_conversation, parse_timeline_tweets_v2, QueryTweetsResponse, ThreadedConversation},
+    IProfile, ITweet, Result, TwitterError, Xplore,
+};
 use async_trait::async_trait;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};

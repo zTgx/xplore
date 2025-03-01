@@ -1,12 +1,11 @@
 use crate::{
     auth::UserAuth,
-    error::{Result, TwitterError},
+    {Result, TwitterError},
 };
-use reqwest::Method;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     multipart::Form,
-    Client,
+    Client, Method,
 };
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -55,7 +54,7 @@ impl InnerRpc {
 
             Ok((parsed, headers))
         } else {
-            Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 
@@ -76,7 +75,7 @@ impl InnerRpc {
             let parsed: T = serde_json::from_str(&text)?;
             Ok((parsed, headers))
         } else {
-            Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 
@@ -108,7 +107,7 @@ impl InnerRpc {
             let parsed: T = serde_json::from_str(&text)?;
             Ok((parsed, headers))
         } else {
-            Err(crate::error::TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{error::Result, rpc::InnerRpc};
+use crate::{rpc::InnerRpc, Result};
 
 pub(crate) struct Inner {
     pub(crate) rpc: InnerRpc,

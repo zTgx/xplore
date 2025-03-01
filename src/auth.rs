@@ -1,6 +1,7 @@
-use crate::error::{Result, TwitterError};
-use crate::primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN};
-use crate::Xplore;
+use crate::{
+    primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN},
+    Result, TwitterError, Xplore,
+};
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
 use reqwest::{
@@ -8,10 +9,12 @@ use reqwest::{
     Method,
 };
 use serde_json::{json, Value};
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::Path;
-use std::sync::Arc;
+use std::{
+    fs::{File, OpenOptions},
+    io::{Read, Write},
+    path::Path,
+    sync::Arc,
+};
 use tokio::sync::Mutex;
 use totp_rs::{Algorithm, TOTP};
 use tracing;

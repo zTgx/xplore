@@ -1,6 +1,7 @@
-use crate::error::Result;
-use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
-use crate::{ISearch, Xplore};
+use crate::{
+    timeline::v1::{QueryProfilesResponse, QueryTweetsResponse},
+    ISearch, Result, Xplore,
+};
 use async_trait::async_trait;
 
 #[derive(Debug, Clone, Copy)]
@@ -41,11 +42,14 @@ impl ISearch for Xplore {
 mod search_utils {
 
     use super::SearchMode;
-    use crate::error::Result;
-    use crate::primitives::Profile;
-    use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
-    use crate::timeline::v2::{parse_legacy_tweet, SearchEntryRaw};
-    use crate::Xplore;
+    use crate::{
+        primitives::Profile,
+        timeline::{
+            v1::{QueryProfilesResponse, QueryTweetsResponse},
+            v2::{parse_legacy_tweet, SearchEntryRaw},
+        },
+        Result, Xplore,
+    };
     use lazy_static::lazy_static;
     use reqwest::Method;
     use serde::Deserialize;

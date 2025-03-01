@@ -1,8 +1,4 @@
-use crate::error::Result;
-use crate::primitives::Profile;
-use crate::IProfile;
-use crate::IRel;
-use crate::Xplore;
+use crate::{primitives::Profile, IProfile, IRel, Result, Xplore};
 use async_trait::async_trait;
 use serde_json::Value;
 
@@ -62,12 +58,11 @@ impl IRel for Xplore {
 }
 
 mod rel_utils {
-
-    use crate::error::Result;
-    use crate::primitives::{Profile, TimelineInstruction};
-    use crate::timeline::home::get_following_timeline;
-    use crate::Xplore;
-    use crate::{primitives::RelationshipTimeline, timeline::v1::QueryProfilesResponse};
+    use crate::{
+        primitives::{Profile, RelationshipTimeline, TimelineInstruction},
+        timeline::{home::get_following_timeline, v1::QueryProfilesResponse},
+        Result, Xplore,
+    };
     use chrono::{DateTime, Utc};
 
     pub async fn fetch_profile_following(
