@@ -46,7 +46,6 @@ async fn main() {
 
 ## Reference projects
 * https://github.com/elizaOS/agent-twitter-client  
-* https://github.com/cornip/Rina  
 
 This project draws inspiration from the aforementioned repositories. We extend our heartfelt gratitude to the developers for their dedication to the open-source ethos! 
 
