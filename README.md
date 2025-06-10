@@ -1,9 +1,7 @@
 <div align="center">
 
-[Discord](https://discord.gg/9b4YQmjh)
-
 # xplore   
-X for Rust
+X/Twitter for Rust
 
 [![Version](https://img.shields.io/crates/v/xplore)](https://crates.io/crates/xplore)
 ![Crates Downloads](https://img.shields.io/crates/d/xplore?logo=rust)
