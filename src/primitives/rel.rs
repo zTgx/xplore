@@ -1,4 +1,4 @@
-use crate::TwitterError;
+use crate::error::XploreError;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -6,7 +6,7 @@ use serde_json::Value;
 pub struct RelationshipResponse {
     pub data: Option<RelationshipData>,
     #[serde(skip)]
-    pub errors: Option<Vec<TwitterError>>,
+    pub errors: Option<Vec<XploreError>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -140,7 +140,7 @@ pub struct CursorContent {
 #[derive(Debug, Deserialize)]
 pub struct RelationshipTimeline {
     pub data: Option<RelationshipTimelineData>,
-    pub errors: Option<Vec<TwitterError>>,
+    pub errors: Option<Vec<XploreError>>,
 }
 
 #[derive(Debug, Deserialize)]

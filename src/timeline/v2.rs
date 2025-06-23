@@ -4,7 +4,7 @@ use crate::{
         tweet_utils::parse_media_groups,
         v1::{LegacyTweetRaw, TimelineResultRaw},
     },
-    Result, TwitterError,
+    Result, error::XploreError,
 };
 use chrono::Utc;
 use lazy_static::lazy_static;
@@ -199,14 +199,14 @@ pub struct SearchEntryItemInnerRaw {
 }
 
 pub fn parse_legacy_tweet(user: Option<&LegacyUserRaw>, tweet: Option<&LegacyTweetRaw>) -> Result<Tweet> {
-    let tweet = tweet.ok_or(TwitterError::Api("Tweet was not found in the timeline object".into()))?;
-    let user = user.ok_or(TwitterError::Api("User was not found in the timeline object".into()))?;
+    let tweet = tweet.ok_or(XploreError::Api("Tweet was not found in the timeline object".into()))?;
+    let user = user.ok_or(XploreError::Api("User was not found in the timeline object".into()))?;
 
     let id_str = tweet
         .id_str
         .as_ref()
         .or(tweet.conversation_id_str.as_ref())
-        .ok_or(TwitterError::Api("Tweet ID was not found in object".into()))?;
+        .ok_or(XploreError::Api("Tweet ID was not found in object".into()))?;
 
     let hashtags = tweet
         .entities
@@ -383,7 +383,7 @@ pub fn parse_result(result: &TimelineResultRaw) -> ParseTweetResult {
 pub struct ParseTweetResult {
     pub success: bool,
     pub tweet: Option<Tweet>,
-    pub err: Option<TwitterError>,
+    pub err: Option<XploreError>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

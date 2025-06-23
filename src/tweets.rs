@@ -1,7 +1,7 @@
 use crate::{
     primitives::{endpoints::Endpoints, tweets::Tweet, TweetRetweetResponse},
     timeline::v2::{parse_threaded_conversation, parse_timeline_tweets_v2, QueryTweetsResponse, ThreadedConversation},
-    IProfile, ITweet, Result, TwitterError, Xplore,
+    IProfile, ITweet, Result, XploreError, Xplore,
 };
 use async_trait::async_trait;
 use reqwest::Method;
@@ -298,7 +298,7 @@ pub async fn upload_media(xplore: &Xplore, file_data: Vec<u8>, media_type: &str)
         response["media_id_string"]
             .as_str()
             .map(String::from)
-            .ok_or_else(|| TwitterError::Api("Failed to get media_id".into()))
+            .ok_or_else(|| XploreError::Api("Failed to get media_id".into()))
     }
 }
 
@@ -314,7 +314,7 @@ async fn upload_video_in_chunks(xplore: &Xplore, file_data: Vec<u8>, media_type:
 
     let media_id = init_response["media_id_string"]
         .as_str()
-        .ok_or_else(|| TwitterError::Api("Failed to get media_id".into()))?
+        .ok_or_else(|| XploreError::Api("Failed to get media_id".into()))?
         .to_string();
 
     // APPEND command - upload in chunks
@@ -360,13 +360,13 @@ async fn check_upload_status(xplore: &Xplore, media_id: &str) -> Result<()> {
         if let Some(processing_info) = status_response.get("processing_info") {
             match processing_info["state"].as_str() {
                 Some("succeeded") => return Ok(()),
-                Some("failed") => return Err(TwitterError::Api("Video processing failed".into())),
+                Some("failed") => return Err(XploreError::Api("Video processing failed".into())),
                 _ => continue,
             }
         }
     }
 
-    Err(TwitterError::Api("Video processing timeout".into()))
+    Err(XploreError::Api("Video processing timeout".into()))
 }
 
 pub async fn get_tweet(xplore: &Xplore, id: &str) -> Result<Tweet> {
@@ -377,7 +377,7 @@ pub async fn get_tweet(xplore: &Xplore, id: &str) -> Result<Tweet> {
     let data = response.clone();
     let conversation: ThreadedConversation = serde_json::from_value(data)?;
     let tweets = parse_threaded_conversation(&conversation);
-    tweets.into_iter().next().ok_or_else(|| TwitterError::Api("No tweets found".into()))
+    tweets.into_iter().next().ok_or_else(|| XploreError::Api("No tweets found".into()))
 }
 
 fn create_tweet_features() -> Value {

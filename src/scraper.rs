@@ -2,7 +2,7 @@ use crate::api::client::Xplore;
 use crate::auth::user_auth::UserAuth;
 use crate::primitives::constants::BEARER_TOKEN;
 use crate::error::Result;
-use crate::error::TwitterError;
+use crate::error::XploreError;
 use crate::primitives::{Profile, Tweet};
 use crate::search::{fetch_search_tweets, SearchMode};
 use crate::timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};

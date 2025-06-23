@@ -1,6 +1,6 @@
 use crate::{
     auth::UserAuth,
-    {Result, TwitterError},
+    {Result, XploreError},
 };
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -22,7 +22,7 @@ impl InnerRpc {
             .timeout(Duration::from_secs(30))
             .cookie_store(true)
             .build()
-            .map_err(TwitterError::Network)?;
+            .map_err(XploreError::Network)?;
 
         let mut auth = UserAuth::new().await?;
         auth.set_from_cookie_string(cookie).await?;
@@ -54,7 +54,7 @@ impl InnerRpc {
 
             Ok((parsed, headers))
         } else {
-            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(XploreError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 
@@ -75,7 +75,7 @@ impl InnerRpc {
             let parsed: T = serde_json::from_str(&text)?;
             Ok((parsed, headers))
         } else {
-            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(XploreError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 
@@ -107,7 +107,7 @@ impl InnerRpc {
             let parsed: T = serde_json::from_str(&text)?;
             Ok((parsed, headers))
         } else {
-            Err(TwitterError::Api(format!("Request failed with status: {}", response.status())))
+            Err(XploreError::Api(format!("Request failed with status: {}", response.status())))
         }
     }
 }
