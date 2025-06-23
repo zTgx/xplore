@@ -1,6 +1,6 @@
 use crate::{
     primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN},
-    Result, TwitterError, Xplore,
+    Result, error::XploreError, Xplore,
 };
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
@@ -76,7 +76,7 @@ impl UserAuth {
 
         if let Some(subtasks) = &flow_response.subtasks {
             if subtasks.iter().any(|s| s.subtask_id == "DenyLoginSubtask") {
-                return Err(TwitterError::Auth("Login denied".into()));
+                return Err(XploreError::Auth("Login denied".into()));
             }
         }
 
@@ -108,7 +108,7 @@ impl UserAuth {
                         if let Some(email_str) = email {
                             self.handle_email_verification(xplore, flow_token, email_str).await?
                         } else {
-                            return Err(TwitterError::Auth("Email required for verification".into()));
+                            return Err(XploreError::Auth("Email required for verification".into()));
                         }
                     }
                     SubtaskType::AccountDuplicationCheck => {
@@ -118,22 +118,22 @@ impl UserAuth {
                         if let Some(secret) = two_factor_secret {
                             self.handle_two_factor_auth(xplore, flow_token, secret).await?
                         } else {
-                            return Err(TwitterError::Auth("Two factor authentication required".into()));
+                            return Err(XploreError::Auth("Two factor authentication required".into()));
                         }
                     }
                     SubtaskType::LoginEnterAlternateIdentifier => {
                         if let Some(email_str) = email {
                             self.handle_alternate_identifier(xplore, flow_token, email_str).await?
                         } else {
-                            return Err(TwitterError::Auth("Email required for alternate identifier".into()));
+                            return Err(XploreError::Auth("Email required for alternate identifier".into()));
                         }
                     }
                     SubtaskType::LoginSuccess => self.handle_success_subtask(xplore, flow_token).await?,
                     SubtaskType::DenyLogin => {
-                        return Err(TwitterError::Auth("Login denied".into()));
+                        return Err(XploreError::Auth("Login denied".into()));
                     }
                     SubtaskType::Unknown(id) => {
-                        return Err(TwitterError::Auth(format!("Unhandled subtask: {}", id)));
+                        return Err(XploreError::Auth(format!("Unhandled subtask: {}", id)));
                     }
                 };
                 flow_token = flow_response.flow_token;
@@ -230,10 +230,10 @@ impl UserAuth {
 
     async fn handle_two_factor_auth(&self, xplore: &Xplore, flow_token: String, secret: &str) -> Result<FlowResponse> {
         let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret.as_bytes().to_vec())
-            .map_err(|e| TwitterError::Auth(format!("Failed to create TOTP: {}", e)))?;
+            .map_err(|e| XploreError::Auth(format!("Failed to create TOTP: {}", e)))?;
 
         let code =
-            totp.generate_current().map_err(|e| TwitterError::Auth(format!("Failed to generate TOTP code: {}", e)))?;
+            totp.generate_current().map_err(|e| XploreError::Auth(format!("Failed to generate TOTP code: {}", e)))?;
 
         let request = FlowTaskRequest {
             flow_token,
@@ -279,7 +279,7 @@ impl UserAuth {
         headers.insert(
             "Authorization",
             HeaderValue::from_str(&format!("Bearer {}", self.bearer_token))
-                .map_err(|e| TwitterError::Auth(e.to_string()))?,
+                .map_err(|e| XploreError::Auth(e.to_string()))?,
         );
 
         let (response, _) = xplore.inner.rpc.send_request::<Value>(url, Method::POST, None).await?;
@@ -287,7 +287,7 @@ impl UserAuth {
         let guest_token = response
             .get("guest_token")
             .and_then(|token| token.as_str())
-            .ok_or_else(|| TwitterError::Auth("Failed to get guest token".into()))?;
+            .ok_or_else(|| XploreError::Auth("Failed to get guest token".into()))?;
 
         self.guest_token = Some(guest_token.to_string());
         self.created_at = Some(Utc::now());
@@ -320,16 +320,16 @@ impl UserAuth {
             cookies.iter().map(|cookie| (cookie.name().to_string(), cookie.value().to_string())).collect();
 
         let json = serde_json::to_string_pretty(&cookie_data)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to serialize cookies: {}", e)))?;
+            .map_err(|e| XploreError::Cookie(format!("Failed to serialize cookies: {}", e)))?;
 
         let mut file = OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(file_path)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to open cookie file: {}", e)))?;
+            .map_err(|e| XploreError::Cookie(format!("Failed to open cookie file: {}", e)))?;
 
-        file.write_all(json.as_bytes()).map_err(|e| TwitterError::Cookie(format!("Failed to write cookies: {}", e)))?;
+        file.write_all(json.as_bytes()).map_err(|e| XploreError::Cookie(format!("Failed to write cookies: {}", e)))?;
 
         Ok(())
     }
@@ -338,16 +338,16 @@ impl UserAuth {
         tracing::trace!("Loading cookies - attempting to lock");
 
         if !Path::new(file_path).exists() {
-            return Err(TwitterError::Cookie("Cookie file does not exist".into()));
+            return Err(XploreError::Cookie("Cookie file does not exist".into()));
         }
         let mut file =
-            File::open(file_path).map_err(|e| TwitterError::Cookie(format!("Failed to open cookie file: {}", e)))?;
+            File::open(file_path).map_err(|e| XploreError::Cookie(format!("Failed to open cookie file: {}", e)))?;
 
         let mut contents = String::new();
         file.read_to_string(&mut contents)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to read cookie file: {}", e)))?;
+            .map_err(|e| XploreError::Cookie(format!("Failed to read cookie file: {}", e)))?;
         let cookie_data: Vec<(String, String)> = serde_json::from_str(&contents)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to parse cookie file: {}", e)))?;
+            .map_err(|e| XploreError::Cookie(format!("Failed to parse cookie file: {}", e)))?;
 
         tracing::trace!(?cookie_data, "Loaded cookie data");
 
@@ -381,7 +381,7 @@ impl UserAuth {
 
     pub async fn set_cookies(&mut self, json_str: &str) -> Result<()> {
         let cookie_data: Vec<(String, String)> = serde_json::from_str(json_str)
-            .map_err(|e| TwitterError::Cookie(format!("Failed to parse cookie JSON: {}", e)))?;
+            .map_err(|e| XploreError::Cookie(format!("Failed to parse cookie JSON: {}", e)))?;
 
         let mut cookie_jar = self.cookie_jar.lock().await;
 
@@ -421,7 +421,7 @@ impl UserAuth {
             cookie_jar.iter().any(|c| c.name() == "ct0") && cookie_jar.iter().any(|c| c.name() == "auth_token");
 
         if !has_essential_cookies {
-            return Err(TwitterError::Cookie("Missing essential cookies (ct0 or auth_token)".into()));
+            return Err(XploreError::Cookie("Missing essential cookies (ct0 or auth_token)".into()));
         }
         Ok(())
     }
@@ -442,7 +442,7 @@ impl UserAuth {
                         .and_then(|e| e.get("message"))
                         .and_then(|m| m.as_str())
                         .unwrap_or("Unknown error");
-                    return Err(TwitterError::Auth(error_msg.to_string()));
+                    return Err(XploreError::Auth(error_msg.to_string()));
                 }
             }
         }
@@ -460,24 +460,24 @@ impl UserAuth {
 
             headers.insert(
                 "Cookie",
-                HeaderValue::from_str(&cookie_header).map_err(|e| TwitterError::Auth(e.to_string()))?,
+                HeaderValue::from_str(&cookie_header).map_err(|e| XploreError::Auth(e.to_string()))?,
             );
 
             if let Some(csrf_cookie) = cookies.iter().find(|c| c.name() == "ct0") {
                 headers.insert(
                     "x-csrf-token",
-                    HeaderValue::from_str(csrf_cookie.value()).map_err(|e| TwitterError::Auth(e.to_string()))?,
+                    HeaderValue::from_str(csrf_cookie.value()).map_err(|e| XploreError::Auth(e.to_string()))?,
                 );
             }
         }
         headers.insert(
             "Authorization",
             HeaderValue::from_str(&format!("Bearer {}", self.bearer_token))
-                .map_err(|e| TwitterError::Auth(e.to_string()))?,
+                .map_err(|e| XploreError::Auth(e.to_string()))?,
         );
         if let Some(token) = &self.guest_token {
             headers
-                .insert("x-guest-token", HeaderValue::from_str(token).map_err(|e| TwitterError::Auth(e.to_string()))?);
+                .insert("x-guest-token", HeaderValue::from_str(token).map_err(|e| XploreError::Auth(e.to_string()))?);
         }
         headers.insert("x-twitter-active-user", HeaderValue::from_static("yes"));
         headers.insert("x-twitter-client-language", HeaderValue::from_static("en"));

@@ -3,10 +3,9 @@ use cookie::CookieTracker;
 use inner::Inner;
 use primitives::{Profile, Tweet, TweetRetweetResponse};
 use search::SearchMode;
-use serde::Deserialize;
 use serde_json::Value;
-use thiserror::Error;
 use timeline::v1::{QueryProfilesResponse, QueryTweetsResponse};
+use crate::error::XploreError;
 
 pub mod auth;
 pub mod cookie;
@@ -18,8 +17,8 @@ pub mod rpc;
 pub mod search;
 pub mod timeline;
 pub mod tweets;
+pub mod error;
 
-// #[derive(Clone)]
 pub struct Xplore {
     inner: Inner,
     pub cookie_tracker: CookieTracker,
@@ -94,37 +93,4 @@ pub trait IRel {
     async fn unfollow(&self, username: &str) -> Result<()>;
 }
 
-#[derive(Debug, Error, Deserialize)]
-pub enum TwitterError {
-    #[error("API error: {0}")]
-    Api(String),
-
-    #[error("Authentication error: {0}")]
-    Auth(String),
-
-    #[error("Network error: {0}")]
-    #[serde(skip)]
-    Network(#[from] reqwest::Error),
-
-    #[error("Rate limit exceeded")]
-    RateLimit,
-
-    #[error("Invalid response format: {0}")]
-    InvalidResponse(String),
-
-    #[error("Missing environment variable: {0}")]
-    EnvVar(String),
-
-    #[error("Cookie error: {0}")]
-    Cookie(String),
-
-    #[error("JSON error: {0}")]
-    #[serde(skip)]
-    Json(#[from] serde_json::Error),
-
-    #[error("IO error: {0}")]
-    #[serde(skip)]
-    Io(#[from] std::io::Error),
-}
-
-pub type Result<T> = std::result::Result<T, TwitterError>;
+pub type Result<T> = std::result::Result<T, XploreError>;

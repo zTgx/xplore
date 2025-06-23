@@ -1,6 +1,6 @@
 use crate::{
     primitives::{constants::URL_USER_BY_SCREEN_NAME, profile::*},
-    IProfile, Result, TwitterError, Xplore,
+    IProfile, Result, error::XploreError, Xplore,
 };
 use async_trait::async_trait;
 use reqwest::Method;
@@ -14,7 +14,7 @@ impl IProfile for Xplore {
 
         if let Some(errors) = user_raw.errors {
             if !errors.is_empty() {
-                return Err(TwitterError::Api(errors[0].message.clone()));
+                return Err(XploreError::Api(errors[0].message.clone()));
             }
         }
 
@@ -24,7 +24,7 @@ impl IProfile for Xplore {
         let is_blue_verified = user_raw_result.is_blue_verified;
         legacy.user_id = rest_id;
         if legacy.screen_name.is_none() || legacy.screen_name.as_ref().unwrap().is_empty() {
-            return Err(TwitterError::Api(format!("Either {} does not exist or is private.", screen_name)));
+            return Err(XploreError::Api(format!("Either {} does not exist or is private.", screen_name)));
         }
         Ok((&legacy, is_blue_verified).into())
     }
