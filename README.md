@@ -44,11 +44,5 @@ async fn main() {
 }
 ```
 
-## Reference projects
-* https://github.com/elizaOS/agent-twitter-client  
-
-This project draws inspiration from the aforementioned repositories. We extend our heartfelt gratitude to the developers for their dedication to the open-source ethos! 
-
 ## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=solagent-rs/xplore&type=Date)](https://star-history.com/#solagent-rs/xplore&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=zTgx/xplore&type=Date)](https://www.star-history.com/#zTgx/xplore&Date)
