@@ -1,7 +1,8 @@
 use crate::{
-    primitives::{endpoints::Endpoints, tweets::Tweet, TweetRetweetResponse},
+    error::XploreError,
+    primitives::{endpoints::Endpoints, tweets::Tweet, Result, TweetRetweetResponse},
     timeline::v2::{parse_threaded_conversation, parse_timeline_tweets_v2, QueryTweetsResponse, ThreadedConversation},
-    IProfile, ITweet, Result, XploreError, Xplore,
+    xplore::{IProfile, ITweet, Xplore},
 };
 use async_trait::async_trait;
 use reqwest::Method;

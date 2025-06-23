@@ -1,6 +1,7 @@
 use crate::{
-    primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType, BEARER_TOKEN},
-    Result, error::XploreError, Xplore,
+    error::XploreError,
+    primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, Result, SubtaskType, BEARER_TOKEN},
+    Xplore,
 };
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
@@ -458,10 +459,8 @@ impl UserAuth {
             let cookie_header =
                 cookies.iter().map(|c| format!("{}={}", c.name(), c.value())).collect::<Vec<_>>().join("; ");
 
-            headers.insert(
-                "Cookie",
-                HeaderValue::from_str(&cookie_header).map_err(|e| XploreError::Auth(e.to_string()))?,
-            );
+            headers
+                .insert("Cookie", HeaderValue::from_str(&cookie_header).map_err(|e| XploreError::Auth(e.to_string()))?);
 
             if let Some(csrf_cookie) = cookies.iter().find(|c| c.name() == "ct0") {
                 headers.insert(

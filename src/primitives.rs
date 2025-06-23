@@ -14,3 +14,6 @@ mod auth;
 pub use auth::*;
 
 pub mod endpoints;
+
+use crate::error::XploreError;
+pub type Result<T> = std::result::Result<T, XploreError>;

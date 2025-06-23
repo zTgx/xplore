@@ -1,6 +1,8 @@
 use crate::{
-    primitives::{constants::URL_USER_BY_SCREEN_NAME, profile::*},
-    IProfile, Result, error::XploreError, Xplore,
+    error::XploreError,
+    primitives::{constants::URL_USER_BY_SCREEN_NAME, profile::*, Result},
+    xplore::IProfile,
+    Xplore,
 };
 use async_trait::async_trait;
 use reqwest::Method;

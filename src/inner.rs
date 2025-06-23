@@ -1,7 +1,7 @@
-use crate::{rpc::InnerRpc, Result};
+use crate::{primitives::Result, rpc::InnerRpc};
 
-pub(crate) struct Inner {
-    pub(crate) rpc: InnerRpc,
+pub struct Inner {
+    pub rpc: InnerRpc,
 }
 
 impl Inner {

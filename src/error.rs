@@ -1,7 +1,4 @@
-use {
-    thiserror::Error,
-    serde::Deserialize,
-};
+use {serde::Deserialize, thiserror::Error};
 
 #[derive(Debug, Error, Deserialize)]
 pub enum XploreError {
