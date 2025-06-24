@@ -1,4 +1,7 @@
-use crate::{primitives::RelationshipTimeline, Result, Xplore};
+use crate::{
+    primitives::{RelationshipTimeline, Result},
+    Xplore,
+};
 use reqwest::Method;
 use serde::Deserialize;
 use serde_json::{json, Value};

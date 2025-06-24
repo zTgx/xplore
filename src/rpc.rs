@@ -1,7 +1,4 @@
-use crate::{
-    auth::UserAuth,
-    {Result, XploreError},
-};
+use crate::{auth::UserAuth, error::XploreError, primitives::Result};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     multipart::Form,
@@ -11,7 +8,7 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::time::Duration;
 
-pub(crate) struct InnerRpc {
+pub struct InnerRpc {
     pub client: Client,
     pub(crate) auth: UserAuth,
 }

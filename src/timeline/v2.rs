@@ -1,10 +1,10 @@
 use crate::{
-    primitives::{profile::LegacyUserRaw, tweets::Mention, Tweet},
+    error::XploreError,
+    primitives::{profile::LegacyUserRaw, tweets::Mention, Result, Tweet},
     timeline::{
         tweet_utils::parse_media_groups,
         v1::{LegacyTweetRaw, TimelineResultRaw},
     },
-    Result, error::XploreError,
 };
 use chrono::Utc;
 use lazy_static::lazy_static;

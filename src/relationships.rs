@@ -1,4 +1,7 @@
-use crate::{primitives::Profile, IProfile, IRel, Result, Xplore};
+use crate::{
+    primitives::{Profile, Result},
+    xplore::{IProfile, IRel, Xplore},
+};
 use async_trait::async_trait;
 use serde_json::Value;
 
@@ -59,9 +62,9 @@ impl IRel for Xplore {
 
 mod rel_utils {
     use crate::{
-        primitives::{Profile, RelationshipTimeline, TimelineInstruction},
+        primitives::{Profile, RelationshipTimeline, Result, TimelineInstruction},
         timeline::{home::get_following_timeline, v1::QueryProfilesResponse},
-        Result, Xplore,
+        xplore::Xplore,
     };
     use chrono::{DateTime, Utc};
 
