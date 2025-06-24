@@ -5,6 +5,7 @@ use {
         primitives::{Profile, Result, Tweet, TweetRetweetResponse},
         search::SearchMode,
         timeline::v1::{QueryProfilesResponse, QueryTweetsResponse},
+        timeline::v2::{QueryTweetsResponse as V2QueryTweetsResponse},
     },
     async_trait::async_trait,
     serde_json::Value,
@@ -44,6 +45,41 @@ pub trait ITweet {
     async fn like_tweet(&self, tweet_id: &str) -> Result<Value>;
 
     async fn get_user_tweets(&self, user_id: &str, limit: usize) -> Result<Vec<Tweet>>;
+
+    async fn send_quote_tweet(
+        &self,
+        text: &str,
+        quoted_tweet_id: &str,
+        media_data: Option<Vec<(Vec<u8>, String)>>,
+    ) -> Result<Value>;
+
+    async fn fetch_tweets_and_replies(
+        &self,
+        username: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<V2QueryTweetsResponse>;
+
+    async fn fetch_tweets_and_replies_by_user_id(
+        &self,
+        user_id: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<V2QueryTweetsResponse>;
+
+    async fn fetch_list_tweets(
+        &self,
+        list_id: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<Value>;
+
+    async fn create_long_tweet(
+        &self,
+        text: &str,
+        reply_to: Option<&str>,
+        media_ids: Option<Vec<String>>,
+    ) -> Result<Value>;
 }
 
 #[async_trait]
@@ -82,4 +118,13 @@ pub trait IRel {
 
     async fn follow(&self, username: &str) -> Result<()>;
     async fn unfollow(&self, username: &str) -> Result<()>;
+}
+
+#[async_trait]
+pub trait IHome {
+    async fn get_home_timeline(
+        &self,
+        count: i32,
+        seen_tweet_ids: Vec<String>,
+    ) -> Result<Vec<Value>>;
 }

@@ -72,6 +72,51 @@ impl ITweet for Xplore {
         let (v, _) = self.inner.rpc.send_request::<Vec<Tweet>>(&url, Method::GET, Some(body)).await?;
         Ok(v)
     }
+
+    async fn send_quote_tweet(
+        &self,
+        text: &str,
+        quoted_tweet_id: &str,
+        media_data: Option<Vec<(Vec<u8>, String)>>,
+    ) -> Result<Value> {
+        create_quote_tweet(self, text, quoted_tweet_id, media_data).await
+    }
+
+    async fn fetch_tweets_and_replies(
+        &self,
+        username: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<QueryTweetsResponse> {
+        fetch_tweets_and_replies_(self, username, max_tweets, cursor).await
+    }
+
+    async fn fetch_tweets_and_replies_by_user_id(
+        &self,
+        user_id: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<QueryTweetsResponse> {
+        fetch_tweets_and_replies_by_user_id(self, user_id, max_tweets, cursor).await
+    }
+
+    async fn fetch_list_tweets(
+        &self,
+        list_id: &str,
+        max_tweets: i32,
+        cursor: Option<&str>,
+    ) -> Result<Value> {
+        fetch_list_tweets(self, list_id, max_tweets, cursor).await
+    }
+
+    async fn create_long_tweet(
+        &self,
+        text: &str,
+        reply_to: Option<&str>,
+        media_ids: Option<Vec<String>>,
+    ) -> Result<Value> {
+        create_long_tweet(self, text, reply_to, media_ids).await
+    }
 }
 
 pub async fn fetch_tweets(xplore: &Xplore, user_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
@@ -96,7 +141,7 @@ pub async fn fetch_tweets(xplore: &Xplore, user_id: &str, max_tweets: i32, curso
     Ok(value)
 }
 
-pub async fn fetch_tweets_and_replies(
+pub async fn fetch_tweets_and_replies_(
     xplore: &Xplore,
     username: &str,
     max_tweets: i32,
