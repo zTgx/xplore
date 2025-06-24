@@ -1,7 +1,7 @@
 use crate::{
     error::XploreError,
     primitives::{FlowInitRequest, FlowResponse, FlowTaskRequest, Result, SubtaskType, BEARER_TOKEN},
-    Xplore,
+    core::client::Xplore,
 };
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;
