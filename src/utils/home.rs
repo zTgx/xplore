@@ -148,7 +148,7 @@ pub async fn get_following_timeline(
         urlencoding::encode(&features.to_string())
     );
 
-    // TODO: 
+    // TODO:
     let (data, _) = xplore.inner.rpc.send_request::<RelationshipTimeline>(&url, Method::GET, None).await?;
 
     Ok(data)

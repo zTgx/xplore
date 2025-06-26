@@ -181,7 +181,6 @@ pub enum Instruction {
     ReplaceEntry { entry: RelationshipTimelineEntry },
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct RelationshipTimelineEntry {
     pub content: EntryContent,
