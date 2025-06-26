@@ -33,13 +33,24 @@ pub struct TimelineData {
     pub instructions: Vec<TimelineInstruction>,
 }
 
+// #[derive(Debug, Deserialize)]
+// #[serde(tag = "type")]
+// pub enum TimelineInstruction {
+//     #[serde(rename = "TimelineAddEntries")]
+//     AddEntries { entries: Vec<TimelineEntry> },
+//     #[serde(rename = "TimelineReplaceEntry")]
+//     ReplaceEntry { entry: TimelineEntry },
+// }
+
+// TODO: fix TimelineInstruction to struct
 #[derive(Debug, Deserialize)]
-#[serde(tag = "type")]
-pub enum TimelineInstruction {
-    #[serde(rename = "TimelineAddEntries")]
-    AddEntries { entries: Vec<TimelineEntry> },
-    #[serde(rename = "TimelineReplaceEntry")]
-    ReplaceEntry { entry: TimelineEntry },
+// #[serde(tag = "type")]
+pub struct TimelineInstruction {
+    #[serde(rename = "type")]
+    pub instruction_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub direction: Option<String>,
+    pub entries: Option<Vec<Value>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -169,6 +180,7 @@ pub enum Instruction {
     #[serde(rename = "TimelineReplaceEntry")]
     ReplaceEntry { entry: RelationshipTimelineEntry },
 }
+
 
 #[derive(Debug, Deserialize)]
 pub struct RelationshipTimelineEntry {

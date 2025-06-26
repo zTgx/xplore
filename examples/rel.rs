@@ -12,7 +12,7 @@ async fn main() {
     // Get the list of users that the authenticated user is following
     let user_id = "44196397"; // Example user ID (Twitter's @elonmusk)
 
-    let following_response = xplore.following(user_id, 3, None).await.expect("Failed to get following list");
+    let following_response = xplore.following(user_id, 1, None).await.expect("Failed to get following list");
 
     println!("Following count: {}", following_response.1.unwrap_or("No next cursor".to_string()));
 

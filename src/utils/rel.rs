@@ -22,6 +22,7 @@ pub async fn fetch_profile_following(
     Ok(parse_relationship_timeline(&timeline))
 }
 
+// TODO:: fix parse function
 fn parse_relationship_timeline(timeline: &RelationshipTimeline) -> QueryProfilesResponse {
     let mut profiles = Vec::new();
     let mut next_cursor = None;
