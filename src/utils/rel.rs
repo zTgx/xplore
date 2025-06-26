@@ -17,6 +17,7 @@ pub async fn fetch_profile_following(
     cursor: Option<String>,
 ) -> Result<QueryProfilesResponse> {
     let timeline = get_following_timeline(xyz, user_id, max_profiles, cursor).await?;
+    println!("Fetched relationship timeline: {:#?}", timeline);
 
     Ok(parse_relationship_timeline(&timeline))
 }

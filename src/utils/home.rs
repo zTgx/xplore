@@ -9,6 +9,7 @@ use {
     },
     reqwest::Method,
     serde_json::{json, Value},
+    std::collections::HashMap,
 };
 
 pub async fn fetch_home_timeline(xplore: &Xplore, count: i32, seen_tweet_ids: Vec<String>) -> Result<Vec<Value>> {
@@ -86,19 +87,13 @@ pub async fn get_following_timeline(
     max_items: i32,
     cursor: Option<String>,
 ) -> Result<RelationshipTimeline> {
-    let count = if max_items > 50 { 50 } else { max_items };
+    let max_items = if max_items > 50 { 50 } else { max_items };
 
     let mut variables = json!({
         "userId": user_id,
-        "count": count,
+        "count": max_items,
         "includePromotedContent": false,
     });
-
-    if let Some(cursor_val) = cursor {
-        if !cursor_val.is_empty() {
-            variables["cursor"] = json!(cursor_val);
-        }
-    }
 
     let features = json!({
         "responsive_web_twitter_article_tweet_consumption_enabled": false,
@@ -107,11 +102,19 @@ pub async fn get_following_timeline(
         "responsive_web_media_download_video_enabled": false,
     });
 
+    if let Some(cursor_val) = cursor {
+        if !cursor_val.is_empty() {
+            variables["cursor"] = json!(cursor_val);
+        }
+    }
+
     let url = format!(
-        "https://twitter.com/i/api/graphql/iSicc7LrzWGBgDPL0tM_TQ/Following?variables={}&features={}",
+        "https://x.com/i/api/graphql/iSicc7LrzWGBgDPL0tM_TQ/Following?variables={}&features={}",
         urlencoding::encode(&variables.to_string()),
         urlencoding::encode(&features.to_string())
     );
+
+    println!("Request URL: {}", url);
 
     let (data, _) = xplore.inner.rpc.send_request::<RelationshipTimeline>(&url, Method::GET, None).await?;
 
