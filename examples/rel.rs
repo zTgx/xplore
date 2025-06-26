@@ -21,4 +21,13 @@ async fn main() {
     for profile in following_response.0 {
         println!("Following: {:#?}", profile.username);
     }
+
+    // Get the list of users that are following the authenticated user
+    let followers_response = xplore.followers(user_id, 1, None).await.expect("Failed to get followers list");
+    println!("Followers count: {}", followers_response.1.unwrap_or("No next cursor".to_string()));
+    // Print the usernames of the profiles that are following the user
+    println!("Followers profiles:");
+    for profile in followers_response.0 {
+        println!("Follower: {:#?}", profile.username);
+    }
 }
