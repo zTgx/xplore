@@ -29,7 +29,7 @@ impl IRel for Xplore {
         count: i32,
         cursor: Option<String>,
     ) -> Result<(Vec<Profile>, Option<String>)> {
-        let response = rel_utils::fetch_profile_following(self, user_id, count, cursor).await?;
+        let response = rel_utils::fetch_profile_followers(self, user_id, count, cursor).await?;
         Ok((response.profiles, response.next))
     }
 

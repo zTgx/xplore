@@ -17,7 +17,7 @@ async fn main() {
     let user_profile = xplore.get_profile(screen_name).await.unwrap();
 
     // Fetching the user's pinned tweets by twitter ID
-    let tweet = xplore.read_tweet(&user_profile.pinned_tweet_id.unwrap()).await.unwrap();
+    let tweet = xplore.read_tweet(&user_profile.pinned_tweet_id.unwrap()[0]).await.unwrap();
 
     // Displaying the tweet details
     println!("Pinned Tweet ID: {:#?}", tweet.id);
