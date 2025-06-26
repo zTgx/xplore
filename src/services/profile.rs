@@ -3,9 +3,9 @@ use {
         api::profile::IProfile,
         core::{
             client::Xplore,
+            error::XploreError,
             models::{constants::URL_USER_BY_SCREEN_NAME, profile::*, Result},
         },
-        error::XploreError,
         utils::profile as profile_utils,
     },
     async_trait::async_trait,

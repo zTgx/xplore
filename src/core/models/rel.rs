@@ -1,6 +1,4 @@
-use crate::error::XploreError;
-use serde::Deserialize;
-use serde_json::Value;
+use {crate::core::error::XploreError, serde::Deserialize, serde_json::Value};
 
 #[derive(Debug, Deserialize)]
 pub struct RelationshipResponse {

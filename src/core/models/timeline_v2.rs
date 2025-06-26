@@ -1,5 +1,6 @@
 use {
     crate::{
+        core::error::XploreError,
         core::models::{
             profile::LegacyUserRaw,
             timeline_v1::{LegacyTweetRaw, TimelineResultRaw},
@@ -7,7 +8,6 @@ use {
             tweets::Tweet,
             Result,
         },
-        error::XploreError,
         utils::tweet::parse_media_groups,
     },
     chrono::Utc,

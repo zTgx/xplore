@@ -9,5 +9,5 @@ pub mod timeline_v1;
 pub mod timeline_v2;
 pub mod tweets;
 
-use crate::error::XploreError;
+use crate::core::error::XploreError;
 pub type Result<T> = std::result::Result<T, XploreError>;

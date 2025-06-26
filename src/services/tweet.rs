@@ -3,6 +3,7 @@ use {
         api::{profile::IProfile, tweet::ITweet},
         core::{
             client::Xplore,
+            error::XploreError,
             models::{
                 endpoints::Endpoints,
                 timeline_v2::{
@@ -13,7 +14,6 @@ use {
                 Result,
             },
         },
-        error::XploreError,
     },
     async_trait::async_trait,
     reqwest::Method,
