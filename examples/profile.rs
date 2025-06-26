@@ -8,15 +8,13 @@ async fn main() {
 
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
     let xplore = Xplore::new(&cookie).await.unwrap();
-    
+
     let screen_name = "elonmusk"; // Replace with the desired screen name
     println!("Getting profile for: {screen_name}");
-    let profile = get_profile(&xplore, screen_name)
-        .await;
+    let profile = get_profile(&xplore, screen_name).await;
     println!("Profile: {profile:#?}");
 
-    let user_id = get_user_id(&xplore, screen_name)
-        .await;
+    let user_id = get_user_id(&xplore, screen_name).await;
     println!("{screen_name}'s User ID: {user_id:?}");
 
     // Getting profile for: elonmusk
@@ -52,7 +50,6 @@ async fn main() {
     //     ),
     // }
     // elonmusk's User ID: "44196397"
-
 }
 
 async fn get_profile(xplore: &Xplore, screen_name: &str) -> xplore::core::models::profile::Profile {
@@ -60,9 +57,7 @@ async fn get_profile(xplore: &Xplore, screen_name: &str) -> xplore::core::models
     // It uses the Xplore instance to call the get_profile method.
     // The screen_name parameter is the user's handle on the platform.
     // The function returns a Profile object containing the user's profile information.
-    let profile = xplore.get_profile(screen_name)
-        .await
-        .expect("Failed to get profile");
+    let profile = xplore.get_profile(screen_name).await.expect("Failed to get profile");
 
     profile
 }
@@ -72,9 +67,7 @@ async fn get_user_id(xplore: &Xplore, screen_name: &str) -> String {
     // It uses the Xplore instance to call the get_user_id method.
     // The screen_name parameter is the user's handle on the platform.
     // The function returns a String containing the user's ID.
-    let user_id = xplore.get_user_id(screen_name)
-        .await
-        .expect("Failed to get profile by ID");
+    let user_id = xplore.get_user_id(screen_name).await.expect("Failed to get profile by ID");
 
-        user_id
+    user_id
 }
