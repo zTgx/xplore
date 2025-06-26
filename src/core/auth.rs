@@ -1,11 +1,11 @@
 use crate::{
     core::client::Xplore,
+    core::error::XploreError,
     core::models::{
         auth::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType},
         constants::BEARER_TOKEN,
         Result,
     },
-    error::XploreError,
 };
 use chrono::{DateTime, Utc};
 use cookie::CookieJar;

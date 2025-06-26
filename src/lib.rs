@@ -4,12 +4,10 @@
 
 pub mod api;
 pub mod core;
-pub mod error;
 pub mod services;
 pub mod utils;
 
 pub use crate::{
     api::{home::IHome, profile::IProfile, rel::IRel, search::ISearch, tweet::ITweet},
-    core::{client::Xplore, models::*},
-    error::XploreError,
+    core::{client::Xplore, error::XploreError, models::*},
 };
