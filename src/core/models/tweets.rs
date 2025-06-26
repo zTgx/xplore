@@ -1,6 +1,18 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+pub const DEFAULT_EXPANSIONS: &[&str] = &[
+    "attachments.poll_ids",
+    "attachments.media_keys",
+    "author_id",
+    "referenced_tweets.id",
+    "in_reply_to_user_id",
+    "edit_history_tweet_ids",
+    "geo.place_id",
+    "entities.mentions.username",
+    "referenced_tweets.id.author_id",
+];
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Tweet {
     pub ext_views: Option<i32>,

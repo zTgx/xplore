@@ -1,4 +1,4 @@
-use crate::primitives::Result;
+use crate::core::models::Result;
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
 use std::fs;
 

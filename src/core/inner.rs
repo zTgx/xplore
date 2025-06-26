@@ -1,4 +1,4 @@
-use crate::{primitives::Result, rpc::InnerRpc};
+use crate::core::{models::Result, rpc::InnerRpc};
 
 pub struct Inner {
     pub rpc: InnerRpc,

@@ -1,15 +1,20 @@
-use crate::primitives::{Photo, Video};
-use crate::timeline::v1::{LegacyTweetRaw, TimelineMediaExtendedRaw};
-use lazy_static::lazy_static;
-use regex::Regex;
+use {
+    crate::core::models::{
+        timeline_v1::{LegacyTweetRaw, TimelineMediaExtendedRaw},
+        tweets::{Photo, Video},
+    },
+    lazy_static::lazy_static,
+    regex::Regex,
+};
+
+pub type NonNullableMediaFields = TimelineMediaExtendedRaw;
+
 lazy_static! {
     static ref RE_HASHTAG: Regex = Regex::new(r"\B(\#\S+\b)").unwrap();
     static ref RE_CASHTAG: Regex = Regex::new(r"\B(\$\S+\b)").unwrap();
     static ref RE_TWITTER_URL: Regex = Regex::new(r"https:(\/\/t\.co\/([A-Za-z0-9]|[A-Za-z]){10})").unwrap();
     static ref RE_USERNAME: Regex = Regex::new(r"\B(\@\S{1,15}\b)").unwrap();
 }
-
-pub type NonNullableMediaFields = TimelineMediaExtendedRaw;
 
 pub fn parse_media_groups(media: &[TimelineMediaExtendedRaw]) -> (Vec<Photo>, Vec<Video>, bool) {
     let mut photos = Vec::new();

@@ -1,39 +1,24 @@
-use crate::{
-    error::XploreError,
-    primitives::{endpoints::Endpoints, tweets::Tweet, Result, TweetRetweetResponse},
-    timeline::v2::{parse_threaded_conversation, parse_timeline_tweets_v2, QueryTweetsResponse, ThreadedConversation},
-    xplore::{IProfile, ITweet, Xplore},
+use {
+    crate::{
+        api::{profile::IProfile, tweet::ITweet},
+        core::{
+            client::Xplore,
+            models::{
+                endpoints::Endpoints,
+                timeline_v2::{
+                    parse_threaded_conversation, parse_timeline_tweets_v2, QueryTweetsResponse, ThreadedConversation,
+                },
+                tweets::Tweet,
+                tweets::TweetRetweetResponse,
+                Result,
+            },
+        },
+        error::XploreError,
+    },
+    async_trait::async_trait,
+    reqwest::Method,
+    serde_json::{json, Value},
 };
-use async_trait::async_trait;
-use reqwest::Method;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-
-pub const DEFAULT_EXPANSIONS: &[&str] = &[
-    "attachments.poll_ids",
-    "attachments.media_keys",
-    "author_id",
-    "referenced_tweets.id",
-    "in_reply_to_user_id",
-    "edit_history_tweet_ids",
-    "geo.place_id",
-    "entities.mentions.username",
-    "referenced_tweets.id.author_id",
-];
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Mention {
-    pub id: String,
-    pub username: Option<String>,
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Photo {
-    pub id: String,
-    pub url: String,
-    pub alt_text: Option<String>,
-}
 
 #[async_trait]
 impl ITweet for Xplore {
@@ -100,12 +85,7 @@ impl ITweet for Xplore {
         fetch_tweets_and_replies_by_user_id(self, user_id, max_tweets, cursor).await
     }
 
-    async fn fetch_list_tweets(
-        &self,
-        list_id: &str,
-        max_tweets: i32,
-        cursor: Option<&str>,
-    ) -> Result<Value> {
+    async fn fetch_list_tweets(&self, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
         fetch_list_tweets(self, list_id, max_tweets, cursor).await
     }
 
@@ -118,6 +98,9 @@ impl ITweet for Xplore {
         create_long_tweet(self, text, reply_to, media_ids).await
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///
 
 pub async fn fetch_tweets(xplore: &Xplore, user_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
     let mut variables = json!({
