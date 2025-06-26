@@ -8,11 +8,8 @@ pub mod error;
 pub mod services;
 pub mod utils;
 
-// pub use crate::{
-//     core::Xplore,
-//     services::{IProfile, ITweet, ISearch},
-//     primitives::{Result, Profile, Tweet, TweetRetweetResponse},
-//     search::SearchMode,
-//     timeline::v1::{QueryProfilesResponse, QueryTweetsResponse},
-//     timeline::v2::{QueryTweetsResponse as V2QueryTweetsResponse},
-// };
+pub use crate::{
+    api::{home::IHome, profile::IProfile, rel::IRel, search::ISearch, tweet::ITweet},
+    core::{client::Xplore, models::*},
+    error::XploreError,
+};
