@@ -10,7 +10,7 @@ async fn main() {
     let xplore = Xplore::new(&cookie).await.unwrap();
 
     // Get the list of users that the authenticated user is following
-    let user_id = "44196397"; // Example user ID (Twitter's @elonmusk)
+    let user_id = "1222365222934962177"; // Example user ID (Twitter's @elonmusk)
 
     let following_response = xplore.following(user_id, 1, None).await.expect("Failed to get following list");
 
