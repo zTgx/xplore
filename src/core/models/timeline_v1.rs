@@ -1,12 +1,15 @@
-use crate::primitives::profile::LegacyUserRaw;
-use crate::primitives::tweets::Mention;
-use crate::primitives::tweets::PlaceRaw;
-use crate::primitives::{Profile, Tweet};
-use crate::timeline::tweet_utils::{parse_media_groups, reconstruct_tweet_html};
-use chrono::DateTime;
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use {
+    crate::{
+        core::models::{
+            profile::{LegacyUserRaw, Profile},
+            tweets::{Mention, PlaceRaw, Tweet},
+        },
+        utils::tweet::{parse_media_groups, reconstruct_tweet_html},
+    },
+    chrono::{DateTime, Utc},
+    serde::{Deserialize, Serialize},
+    std::collections::HashMap,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Hashtag {

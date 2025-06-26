@@ -1,7 +1,8 @@
 use {
-    crate::{
-        primitives::{Result, Tweet, TweetRetweetResponse},
-        timeline::v2::{QueryTweetsResponse as V2QueryTweetsResponse},
+    crate::core::models::{
+        timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
+        tweets::{Tweet, TweetRetweetResponse},
+        Result,
     },
     async_trait::async_trait,
     serde_json::Value,
@@ -43,12 +44,7 @@ pub trait ITweet {
         cursor: Option<&str>,
     ) -> Result<V2QueryTweetsResponse>;
 
-    async fn fetch_list_tweets(
-        &self,
-        list_id: &str,
-        max_tweets: i32,
-        cursor: Option<&str>,
-    ) -> Result<Value>;
+    async fn fetch_list_tweets(&self, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value>;
 
     async fn create_long_tweet(
         &self,
@@ -57,4 +53,3 @@ pub trait ITweet {
         media_ids: Option<Vec<String>>,
     ) -> Result<Value>;
 }
-

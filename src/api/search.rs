@@ -1,8 +1,8 @@
 use {
-    crate::{
+    crate::core::models::{
         search::SearchMode,
-        timeline::v1::{QueryProfilesResponse, QueryTweetsResponse},
-        primitives::Result,
+        timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+        Result,
     },
     async_trait::async_trait,
 };

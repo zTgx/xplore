@@ -1,10 +1,4 @@
-use {
-    crate::{
-        cookie::CookieTracker,
-        inner::Inner,
-        primitives::Result,
-    },
-};
+use crate::core::{cookie::CookieTracker, inner::Inner, models::Result};
 
 pub struct Xplore {
     pub inner: Inner,
@@ -19,7 +13,3 @@ impl Xplore {
         Ok(Self { inner, cookie_tracker })
     }
 }
-
-
-
-

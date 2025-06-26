@@ -1,4 +1,4 @@
-use crate::{auth::UserAuth, error::XploreError, primitives::Result};
+use crate::{core::auth::UserAuth, core::models::Result, error::XploreError};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     multipart::Form,

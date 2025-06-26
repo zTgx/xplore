@@ -1,14 +1,19 @@
-use crate::{
-    error::XploreError,
-    primitives::{profile::LegacyUserRaw, tweets::Mention, Result, Tweet},
-    timeline::{
-        tweet_utils::parse_media_groups,
-        v1::{LegacyTweetRaw, TimelineResultRaw},
+use {
+    crate::{
+        core::models::{
+            profile::LegacyUserRaw,
+            timeline_v1::{LegacyTweetRaw, TimelineResultRaw},
+            tweets::Mention,
+            tweets::Tweet,
+            Result,
+        },
+        error::XploreError,
+        utils::tweet::parse_media_groups,
     },
+    chrono::Utc,
+    lazy_static::lazy_static,
+    serde::{Deserialize, Serialize},
 };
-use chrono::Utc;
-use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
 
 lazy_static! {
     static ref EMPTY_INSTRUCTIONS: Vec<TimelineInstruction> = Vec::new();

@@ -1,5 +1,5 @@
 use {
-    crate::primitives::{Profile, Result},
+    crate::core::models::{profile::Profile, Result},
     async_trait::async_trait,
 };
 
