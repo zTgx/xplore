@@ -6,29 +6,27 @@ pub mod core;
 pub mod services;
 pub mod utils;
 
+///! Export
 pub use core::models::search::SearchMode;
 
-use crate::{
-    core::{cookie::CookieTracker, inner::Inner},
-    services::tweet,
-};
 use {
-    crate::core::models::{profile::Profile, Result},
-    crate::services::{home, profile, relationship, search},
-};
-
-use crate::core::models::timeline_v1::{QueryProfilesResponse, QueryTweetsResponse};
-
-use {
-    crate::core::models::{
-        timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
-        tweets::{Tweet, TweetRetweetResponse},
+    crate::{
+        core::{
+            cookie::CookieTracker,
+            inner::Inner,
+            models::{
+                profile::Profile,
+                timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+                timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
+                tweets::{Tweet, TweetRetweetResponse},
+                Result,
+            },
+        },
+        services::{home, profile, relationship, search, tweet},
     },
     serde_json::Value,
 };
 
-///! Xplore - A Twitter API client for Rust
-///! This crate provides a convenient way to interact with Twitter's API.    
 pub struct Xplore {
     pub inner: Inner,
     pub cookie_tracker: CookieTracker,
