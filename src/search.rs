@@ -4,19 +4,26 @@ use {
         core::{
             auth::UserAuth,
             models::{
-                search::SearchMode,
                 timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
                 timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
-                Result,
             },
         },
-        Profile,
+        Profile, Result,
     },
     lazy_static::lazy_static,
     reqwest::Method,
     serde::Deserialize,
     serde_json::json,
 };
+
+#[derive(Debug, Clone, Copy)]
+pub enum SearchMode {
+    Top,
+    Latest,
+    Photos,
+    Videos,
+    Users,
+}
 
 pub async fn search_tweets(
     auth: &mut UserAuth,

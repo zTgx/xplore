@@ -8,26 +8,60 @@ pub mod utils;
 
 mod api;
 pub mod profile;
+pub mod relationship;
 pub mod search;
-
-///! Export
-pub use core::models::search::SearchMode;
-
-use crate::core::auth::UserAuth;
 
 use {
     crate::{
+        core::auth::UserAuth,
         core::models::{
             timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
             timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
             tweets::{Tweet, TweetRetweetResponse},
-            Result,
         },
         profile::{get_profile, get_user_id, Profile},
-        services::{home, relationship, tweet},
+        search::SearchMode,
+        services::tweet,
     },
+    serde::Deserialize,
     serde_json::Value,
+    thiserror::Error,
 };
+
+pub type Result<T> = std::result::Result<T, XploreError>;
+
+#[derive(Debug, Error, Deserialize)]
+pub enum XploreError {
+    #[error("API error: {0}")]
+    Api(String),
+
+    #[error("Authentication error: {0}")]
+    Auth(String),
+
+    #[error("Network error: {0}")]
+    #[serde(skip)]
+    Network(#[from] reqwest::Error),
+
+    #[error("Rate limit exceeded")]
+    RateLimit,
+
+    #[error("Invalid response format: {0}")]
+    InvalidResponse(String),
+
+    #[error("Missing environment variable: {0}")]
+    EnvVar(String),
+
+    #[error("Cookie error: {0}")]
+    Cookie(String),
+
+    #[error("JSON error: {0}")]
+    #[serde(skip)]
+    Json(#[from] serde_json::Error),
+
+    #[error("IO error: {0}")]
+    #[serde(skip)]
+    Io(#[from] std::io::Error),
+}
 
 ///! TODO: update it later
 pub struct XploreOptions {}
@@ -106,13 +140,13 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the search fails, such as if the query is invalid or if there is a network issue.
     pub async fn search_tweets(
-        &self,
+        &mut self,
         query: &str,
         max_tweets: i32,
         search_mode: SearchMode,
         cursor: Option<String>,
     ) -> Result<QueryTweetsResponse> {
-        search::search_tweets(&self, query, max_tweets, search_mode, cursor).await
+        search::search_tweets(&mut self.auth, query, max_tweets, search_mode, cursor).await
     }
 
     ///! Searches for user profiles based on a query string.
@@ -125,17 +159,29 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the search fails, such as if the query is invalid or if there is a network issue.
     pub async fn search_profiles(
-        &self,
+        &mut self,
         query: &str,
         max_profiles: i32,
         cursor: Option<String>,
     ) -> Result<QueryProfilesResponse> {
-        search::search_profiles(&self, query, max_profiles, cursor).await
+        search::search_profiles(&mut self.auth, query, max_profiles, cursor).await
     }
 }
 
 ///! Relationship's API collection
 impl Xplore {
+    ///! Fetches the home timeline with a specified count and a list of seen tweet IDs.
+    /// # Arguments
+    /// * `count` - The number of tweets to return.
+    /// * `seen_tweet_ids` - A vector of tweet IDs that have already been seen.
+    /// # Returns
+    /// * `Result<Vec<Value>>` - A result containing a vector of tweets if successful, or an error if not.
+    /// # Errors
+    /// Returns an error if the home timeline cannot be fetched, such as if there is a network issue or if the user is not authenticated.
+    pub async fn get_home_timeline(&mut self, count: i32, seen_tweet_ids: Vec<String>) -> Result<Vec<Value>> {
+        relationship::get_home_timeline(self, count, seen_tweet_ids).await
+    }
+
     ///! Fetches the relationship status between the authenticated user and another user.
     /// # Arguments
     /// * `user_id` - The ID of the user whose relationship status is to be fetched.
@@ -144,12 +190,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the relationship status cannot be fetched, such as if the user does not exist or if there is a network issue.
     pub async fn get_following(
-        &self,
+        &mut self,
         user_id: &str,
         count: i32,
         cursor: Option<String>,
     ) -> Result<(Vec<Profile>, Option<String>)> {
-        relationship::get_following(&self, user_id, count, cursor).await
+        relationship::get_following(self, user_id, count, cursor).await
     }
 
     ///! Fetches the followers of a user.
@@ -162,12 +208,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the followers cannot be fetched, such as if the user does not exist or if there is a network issue.
     pub async fn get_followers(
-        &self,
+        &mut self,
         user_id: &str,
         count: i32,
         cursor: Option<String>,
     ) -> Result<(Vec<Profile>, Option<String>)> {
-        relationship::get_followers(&self, user_id, count, cursor).await
+        relationship::get_followers(self, user_id, count, cursor).await
     }
 
     ///! Follows a user by their username.
@@ -177,8 +223,8 @@ impl Xplore {
     /// * `Result<()>` - A result indicating success or failure.
     /// # Errors    
     /// Returns an error if the follow action fails, such as if the user does not exist or if there is a network issue.
-    pub async fn follow(&self, username: &str) -> Result<()> {
-        relationship::follow(&self, username).await
+    pub async fn follow(&mut self, username: &str) -> Result<()> {
+        relationship::follow(self, username).await
     }
 
     ///! Unfollows a user by their username.
@@ -188,8 +234,8 @@ impl Xplore {
     /// * `Result<()>` - A result indicating success or failure.
     /// # Errors
     /// Returns an error if the unfollow action fails, such as if the user does not
-    pub async fn unfollow(&self, username: &str) -> Result<()> {
-        relationship::unfollow(&self, username).await
+    pub async fn unfollow(&mut self, username: &str) -> Result<()> {
+        relationship::unfollow(self, username).await
     }
 }
 
@@ -341,20 +387,5 @@ impl Xplore {
         media_ids: Option<Vec<String>>,
     ) -> Result<Value> {
         tweet::create_long_tweet(&self, text, reply_to, media_ids).await
-    }
-}
-
-///! Home's API collection
-impl Xplore {
-    ///! Fetches the home timeline with a specified count and a list of seen tweet IDs.
-    /// # Arguments
-    /// * `count` - The number of tweets to return.
-    /// * `seen_tweet_ids` - A vector of tweet IDs that have already been seen.
-    /// # Returns
-    /// * `Result<Vec<Value>>` - A result containing a vector of tweets if successful, or an error if not.
-    /// # Errors
-    /// Returns an error if the home timeline cannot be fetched, such as if there is a network issue or if the user is not authenticated.
-    pub async fn get_home_timeline(&self, count: i32, seen_tweet_ids: Vec<String>) -> Result<Vec<Value>> {
-        home::get_home_timeline(&self, count, seen_tweet_ids).await
     }
 }

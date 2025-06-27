@@ -1,12 +1,5 @@
 use {
-    crate::{
-        api,
-        core::{
-            auth::UserAuth,
-            error::XploreError,
-            models::{constants::URL_USER_BY_SCREEN_NAME, Result},
-        },
-    },
+    crate::{api, core::auth::UserAuth, Result, XploreError},
     chrono::{DateTime, Utc},
     lazy_static::lazy_static,
     reqwest::Method,
@@ -269,7 +262,13 @@ pub struct TwitterApiErrorRaw {
 
 pub async fn get_profile(auth: &mut UserAuth, screen_name: &str) -> Result<Profile> {
     let body = screen_name_body(screen_name);
-    let response = api::send_request::<UserRaw>(auth, URL_USER_BY_SCREEN_NAME, Method::GET, body).await?;
+    let response = api::send_request::<UserRaw>(
+        auth,
+        "https://twitter.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName",
+        Method::GET,
+        body,
+    )
+    .await?;
     let user_raw = response.0;
 
     if let Some(errors) = user_raw.errors {
