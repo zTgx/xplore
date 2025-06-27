@@ -1,22 +1,14 @@
+#![allow(dead_code)]
+
 use {
-    crate::{
-        api,
-        core::{
-            error::XploreError,
-            models::{
-                auth::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType},
-                constants::BEARER_TOKEN,
-                Result,
-            },
-        },
-        Xplore,
-    },
+    crate::{api, api::BEARER_TOKEN, Result, Xplore, XploreError},
     chrono::{DateTime, Utc},
     cookie::CookieJar,
     reqwest::{
         header::{HeaderMap, HeaderValue},
         Client, Method,
     },
+    serde::{Deserialize, Serialize},
     serde_json::{json, Value},
     std::{
         fs::{File, OpenOptions},
@@ -29,6 +21,81 @@ use {
     totp_rs::{Algorithm, TOTP},
     tracing,
 };
+
+pub struct AuthConfig {
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub email: Option<String>,
+    pub bearer_token: String,
+    pub two_factor_secret: Option<String>,
+}
+
+impl AuthConfig {
+    pub fn new(bearer_token: String) -> Self {
+        Self { username: None, password: None, email: None, bearer_token, two_factor_secret: None }
+    }
+
+    pub fn with_credentials(mut self, username: String, password: String, email: Option<String>) -> Self {
+        self.username = Some(username);
+        self.password = Some(password);
+        self.email = email;
+        self
+    }
+}
+
+#[derive(Debug)]
+pub enum SubtaskType {
+    LoginJsInstrumentation,
+    LoginEnterUserIdentifier,
+    LoginEnterPassword,
+    LoginAcid,
+    AccountDuplicationCheck,
+    LoginTwoFactorAuthChallenge,
+    LoginEnterAlternateIdentifier,
+    LoginSuccess,
+    DenyLogin,
+    Unknown(String),
+}
+
+impl From<&str> for SubtaskType {
+    fn from(s: &str) -> Self {
+        match s {
+            "LoginJsInstrumentationSubtask" => Self::LoginJsInstrumentation,
+            "LoginEnterUserIdentifierSSO" => Self::LoginEnterUserIdentifier,
+            "LoginEnterPassword" => Self::LoginEnterPassword,
+            "LoginAcid" => Self::LoginAcid,
+            "AccountDuplicationCheck" => Self::AccountDuplicationCheck,
+            "LoginTwoFactorAuthChallenge" => Self::LoginTwoFactorAuthChallenge,
+            "LoginEnterAlternateIdentifierSubtask" => Self::LoginEnterAlternateIdentifier,
+            "LoginSuccessSubtask" => Self::LoginSuccess,
+            "DenyLoginSubtask" => Self::DenyLogin,
+            other => Self::Unknown(other.to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowInitRequest {
+    pub flow_name: String,
+    pub input_flow_data: serde_json::Value,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FlowTaskRequest {
+    pub flow_token: String,
+    pub subtask_inputs: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FlowResponse {
+    pub flow_token: String,
+    pub subtasks: Option<Vec<Subtask>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Subtask {
+    pub subtask_id: String,
+}
 
 #[derive(Clone)]
 pub struct UserAuth {
@@ -80,7 +147,7 @@ impl UserAuth {
         Ok(response)
     }
 
-    async fn execute_flow_task(&mut self, xplore: &Xplore, request: FlowTaskRequest) -> Result<FlowResponse> {
+    async fn execute_flow_task(&mut self, _xplore: &Xplore, request: FlowTaskRequest) -> Result<FlowResponse> {
         let url = "https://api.twitter.com/1.1/onboarding/task.json";
         let body = Some(json!(request));
         let (flow_response, raw_response) = api::send_request::<FlowResponse>(self, url, Method::POST, body).await?;
@@ -307,7 +374,7 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn update_guest_token(&mut self, xplore: &Xplore) -> Result<()> {
+    async fn update_guest_token(&mut self, _xplore: &Xplore) -> Result<()> {
         let url = "https://api.twitter.com/1.1/guest/activate.json";
 
         let mut headers = HeaderMap::new();
@@ -461,7 +528,7 @@ impl UserAuth {
         Ok(())
     }
 
-    pub async fn is_logged_in(&mut self, xplore: &Xplore) -> Result<bool> {
+    pub async fn is_logged_in(&mut self, _xplore: &Xplore) -> Result<bool> {
         let mut headers = HeaderMap::new();
         self.install_headers(&mut headers).await?;
 

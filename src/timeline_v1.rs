@@ -1,10 +1,10 @@
+#![allow(dead_code)]
+
 use {
     crate::{
-        core::models::{
-            profile::{LegacyUserRaw, Profile},
-            tweets::{Mention, PlaceRaw, Tweet},
-        },
-        utils::tweet::{parse_media_groups, reconstruct_tweet_html},
+        api_utils::{parse_media_groups, reconstruct_tweet_html},
+        profile::{LegacyUserRaw, Profile},
+        tweets::{Mention, PlaceRaw, Tweet},
     },
     chrono::{DateTime, Utc},
     serde::{Deserialize, Serialize},

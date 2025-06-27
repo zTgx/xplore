@@ -1,5 +1,5 @@
 use {
-    crate::{api, core::auth::UserAuth, Result, XploreError},
+    crate::{api, auth::UserAuth, Result, XploreError},
     chrono::{DateTime, Utc},
     lazy_static::lazy_static,
     reqwest::Method,

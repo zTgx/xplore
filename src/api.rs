@@ -1,5 +1,5 @@
 use {
-    crate::{core::auth::UserAuth, Result, XploreError},
+    crate::{auth::UserAuth, Result, XploreError},
     reqwest::{
         header::{HeaderMap, HeaderValue},
         multipart::Form,
@@ -13,7 +13,7 @@ use {
 pub const BEARER_TOKEN: &str =
     "AAAAAAAAAAAAAAAAAAAAAFQODgEAAAAAVHTp76lzh3rFzcHbmHVvQxYYpTw%3DckAlMINMjmCwxUcaXbAN4XqJVdgMJaHqNOFgPMK0zN1qLqLQCF";
 
-pub const URL_USER_BY_REST_ID: &str = "https://twitter.com/i/api/graphql/xf3jd90KKBCUxdlI_tNHZw/UserByRestId";
+// pub const URL_USER_BY_REST_ID: &str = "https://twitter.com/i/api/graphql/xf3jd90KKBCUxdlI_tNHZw/UserByRestId";
 
 pub async fn send_request<T>(
     auth: &mut UserAuth,

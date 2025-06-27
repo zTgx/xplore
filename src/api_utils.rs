@@ -1,5 +1,5 @@
 use {
-    crate::core::models::{
+    crate::{
         timeline_v1::{LegacyTweetRaw, TimelineMediaExtendedRaw},
         tweets::{Photo, Video},
     },

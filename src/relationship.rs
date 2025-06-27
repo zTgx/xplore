@@ -1,5 +1,5 @@
 use {
-    crate::{api, core::models::timeline_v1::QueryProfilesResponse, Profile, Result, Xplore, XploreError},
+    crate::{api, timeline_v1::QueryProfilesResponse, Profile, Result, Xplore, XploreError},
     chrono::{DateTime, Utc},
     reqwest::Method,
     serde::Deserialize,
@@ -396,7 +396,7 @@ pub async fn get_following(
     count: i32,
     cursor: Option<String>,
 ) -> Result<(Vec<Profile>, Option<String>)> {
-    let response = fetch_profile_following(&mut xplore, user_id, count, cursor).await?;
+    let response = fetch_profile_following(xplore, user_id, count, cursor).await?;
     Ok((response.profiles, response.next))
 }
 
@@ -406,7 +406,7 @@ pub async fn get_followers(
     count: i32,
     cursor: Option<String>,
 ) -> Result<(Vec<Profile>, Option<String>)> {
-    let response = fetch_profile_followers(&mut xplore, user_id, count, cursor).await?;
+    let response = fetch_profile_followers(xplore, user_id, count, cursor).await?;
     Ok((response.profiles, response.next))
 }
 

@@ -1,14 +1,13 @@
+#![allow(dead_code)]
+
 use {
     crate::{
-        core::error::XploreError,
-        core::models::{
-            profile::LegacyUserRaw,
-            timeline_v1::{LegacyTweetRaw, TimelineResultRaw},
-            tweets::Mention,
-            tweets::Tweet,
-            Result,
-        },
-        utils::tweet::parse_media_groups,
+        api_utils::parse_media_groups,
+        profile::LegacyUserRaw,
+        timeline_v1::{LegacyTweetRaw, TimelineResultRaw},
+        tweets::Mention,
+        tweets::Tweet,
+        Result, XploreError,
     },
     chrono::Utc,
     lazy_static::lazy_static,

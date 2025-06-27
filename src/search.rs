@@ -1,13 +1,9 @@
 use {
     crate::{
         api,
-        core::{
-            auth::UserAuth,
-            models::{
-                timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
-                timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
-            },
-        },
+        auth::UserAuth,
+        timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+        timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
         Profile, Result,
     },
     lazy_static::lazy_static,

@@ -2,26 +2,29 @@
 //!
 //! This crate provides a convenient way to interact with Twitter's API.
 
-pub mod core;
-pub mod services;
-pub mod utils;
-
 mod api;
+mod api_utils;
+mod auth;
+mod endpoints;
 pub mod profile;
 pub mod relationship;
 pub mod search;
+mod timeline_v1;
+mod timeline_v2;
+pub mod tweets;
 
 use {
     crate::{
-        core::auth::UserAuth,
-        core::models::{
-            timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
-            timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
-            tweets::{Tweet, TweetRetweetResponse},
-        },
+        auth::UserAuth,
         profile::{get_profile, get_user_id, Profile},
         search::SearchMode,
-        services::tweet,
+        timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+        timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
+        tweets::{
+            create_long_tweet, fetch_list_tweets, fetch_tweets_and_replies, fetch_tweets_and_replies_by_user_id,
+            get_user_tweets, like_tweet, post_tweet, read_tweet, retweet, send_quote_tweet, Tweet,
+            TweetRetweetResponse,
+        },
     },
     serde::Deserialize,
     serde_json::Value,
@@ -251,12 +254,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the tweet cannot be posted, such as if the text is too long, if the media data is invalid, or if there is a network issue.
     pub async fn post_tweet(
-        &self,
+        &mut self,
         text: &str,
         reply_to: Option<&str>,
         media_data: Option<Vec<(Vec<u8>, String)>>,
     ) -> Result<Value> {
-        tweet::post_tweet(&self, text, reply_to, media_data).await
+        post_tweet(self, text, reply_to, media_data).await
     }
 
     ///! reads a tweet by its ID.
@@ -266,8 +269,8 @@ impl Xplore {
     /// * `Result<Tweet>` - A result containing the tweet if successful, or an error if not.
     /// # Errors
     /// Returns an error if the tweet cannot be read, such as if the tweet does not exist or if there is a network issue.
-    pub async fn read_tweet(&self, tweet_id: &str) -> Result<Tweet> {
-        tweet::read_tweet(&self, tweet_id).await
+    pub async fn read_tweet(&mut self, tweet_id: &str) -> Result<Tweet> {
+        read_tweet(self, tweet_id).await
     }
 
     ///! Retweets a tweet by its ID.
@@ -277,8 +280,8 @@ impl Xplore {
     /// * `Result<TweetRetweetResponse>` - A result containing the retweet response if successful, or an error if not.
     /// # Errors
     /// Returns an error if the retweet action fails, such as if the tweet does not exist, if the user has already retweeted it, or if there is a network issue.
-    pub async fn retweet(&self, tweet_id: &str) -> Result<TweetRetweetResponse> {
-        tweet::retweet(&self, tweet_id).await
+    pub async fn retweet(&mut self, tweet_id: &str) -> Result<TweetRetweetResponse> {
+        retweet(self, tweet_id).await
     }
 
     ///! Likes a tweet by its ID.
@@ -288,8 +291,8 @@ impl Xplore {
     /// * `Result<Value>` - A result containing the response from the like action if successful, or an error if not.
     /// # Errors
     /// Returns an error if the like action fails, such as if the tweet does not exist, if the user has already liked it, or if there is a network issue.
-    pub async fn like_tweet(&self, tweet_id: &str) -> Result<Value> {
-        tweet::like_tweet(&self, tweet_id).await
+    pub async fn like_tweet(&mut self, tweet_id: &str) -> Result<Value> {
+        like_tweet(self, tweet_id).await
     }
 
     ///! Gets a user's tweets.
@@ -300,8 +303,8 @@ impl Xplore {
     /// * `Result<Vec<Tweet>>` - A result containing a vector of tweets if successful, or an error if not.
     /// # Errors
     /// Returns an error if the tweets cannot be fetched, such as if the user does not exist or if there is a network issue.
-    pub async fn get_user_tweets(&self, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {
-        tweet::get_user_tweets(&self, user_id, limit).await
+    pub async fn get_user_tweets(&mut self, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {
+        get_user_tweets(self, user_id, limit).await
     }
 
     ///! Sends a quote tweet with optional media attachments.
@@ -314,12 +317,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the quote tweet cannot be sent, such as if the text is too long, if the quoted tweet does not exist, if the media data is invalid, or if there is a network issue.
     pub async fn send_quote_tweet(
-        &self,
+        &mut self,
         text: &str,
         quoted_tweet_id: &str,
         media_data: Option<Vec<(Vec<u8>, String)>>,
     ) -> Result<Value> {
-        tweet::send_quote_tweet(&self, text, quoted_tweet_id, media_data).await
+        send_quote_tweet(self, text, quoted_tweet_id, media_data).await
     }
 
     ///! Fetches tweets and replies from a user's timeline.
@@ -332,12 +335,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the tweets and replies cannot be fetched, such as if the user does not exist or if there is a network issue.
     pub async fn fetch_tweets_and_replies(
-        &self,
+        &mut self,
         username: &str,
         max_tweets: i32,
         cursor: Option<&str>,
     ) -> Result<V2QueryTweetsResponse> {
-        tweet::fetch_tweets_and_replies(&self, username, max_tweets, cursor).await
+        fetch_tweets_and_replies(self, username, max_tweets, cursor).await
     }
 
     ///! Fetches tweets and replies from a user's timeline by their user ID.
@@ -350,12 +353,12 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the tweets and replies cannot be fetched, such as if the user does not exist or if there is a network issue.
     pub async fn fetch_tweets_and_replies_by_user_id(
-        &self,
+        &mut self,
         user_id: &str,
         max_tweets: i32,
         cursor: Option<&str>,
     ) -> Result<V2QueryTweetsResponse> {
-        tweet::fetch_tweets_and_replies_by_user_id(&self, user_id, max_tweets, cursor).await
+        fetch_tweets_and_replies_by_user_id(self, user_id, max_tweets, cursor).await
     }
 
     ///! Fetches tweets from a list by its ID.
@@ -367,8 +370,8 @@ impl Xplore {
     /// * `Result<Value>` - A result containing the response with tweets if successful, or an error if not.
     /// # Errors
     /// Returns an error if the tweets cannot be fetched, such as if the list does not exist or if there is a network issue.
-    pub async fn fetch_list_tweets(&self, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
-        tweet::fetch_list_tweets(&self, list_id, max_tweets, cursor).await
+    pub async fn fetch_list_tweets(&mut self, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
+        fetch_list_tweets(self, list_id, max_tweets, cursor).await
     }
 
     ///! Creates a long tweet with optional media attachments.
@@ -381,11 +384,11 @@ impl Xplore {
     /// # Errors
     /// Returns an error if the long tweet cannot be created, such as if the text is too long, if the media IDs are invalid, or if there is a network issue.
     pub async fn create_long_tweet(
-        &self,
+        &mut self,
         text: &str,
         reply_to: Option<&str>,
         media_ids: Option<Vec<String>>,
     ) -> Result<Value> {
-        tweet::create_long_tweet(&self, text, reply_to, media_ids).await
+        create_long_tweet(self, text, reply_to, media_ids).await
     }
 }
