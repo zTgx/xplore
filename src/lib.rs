@@ -12,7 +12,6 @@ pub use core::models::search::SearchMode;
 use {
     crate::{
         core::{
-            cookie::CookieTracker,
             inner::Inner,
             models::{
                 profile::Profile,
@@ -30,15 +29,13 @@ use {
 ///! TODO: refactor Xplore fields???
 pub struct Xplore {
     pub inner: Inner,
-    pub cookie_tracker: CookieTracker,
 }
 
 impl Xplore {
     pub async fn new(cookie: &str) -> Result<Self> {
         let inner = Inner::new(cookie).await?;
-        let cookie_tracker = CookieTracker::new(cookie);
 
-        Ok(Self { inner, cookie_tracker })
+        Ok(Self { inner })
     }
 }
 
