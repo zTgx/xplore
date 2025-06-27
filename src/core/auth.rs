@@ -1,28 +1,32 @@
-use crate::{
-    core::client::Xplore,
-    core::error::XploreError,
-    core::models::{
-        auth::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType},
-        constants::BEARER_TOKEN,
-        Result,
+use {
+    crate::{
+        core::{
+            error::XploreError,
+            models::{
+                auth::{FlowInitRequest, FlowResponse, FlowTaskRequest, SubtaskType},
+                constants::BEARER_TOKEN,
+                Result,
+            },
+        },
+        Xplore,
     },
+    chrono::{DateTime, Utc},
+    cookie::CookieJar,
+    reqwest::{
+        header::{HeaderMap, HeaderValue},
+        Method,
+    },
+    serde_json::{json, Value},
+    std::{
+        fs::{File, OpenOptions},
+        io::{Read, Write},
+        path::Path,
+        sync::Arc,
+    },
+    tokio::sync::Mutex,
+    totp_rs::{Algorithm, TOTP},
+    tracing,
 };
-use chrono::{DateTime, Utc};
-use cookie::CookieJar;
-use reqwest::{
-    header::{HeaderMap, HeaderValue},
-    Method,
-};
-use serde_json::{json, Value};
-use std::{
-    fs::{File, OpenOptions},
-    io::{Read, Write},
-    path::Path,
-    sync::Arc,
-};
-use tokio::sync::Mutex;
-use totp_rs::{Algorithm, TOTP};
-use tracing;
 
 #[derive(Clone)]
 pub struct UserAuth {

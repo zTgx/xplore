@@ -1,6 +1,8 @@
-use crate::core::models::Result;
-use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
-use std::fs;
+use {
+    crate::core::models::Result,
+    reqwest::header::{HeaderMap, HeaderValue, COOKIE},
+    std::fs,
+};
 
 pub struct CookieTracker {
     pub cookie: String,

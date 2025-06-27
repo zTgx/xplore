@@ -27,12 +27,12 @@ use {
     serde_json::Value,
 };
 
+///! TODO: refactor Xplore fields???
 pub struct Xplore {
     pub inner: Inner,
     pub cookie_tracker: CookieTracker,
 }
 
-///! TODO: refactor Xplore fields???
 impl Xplore {
     pub async fn new(cookie: &str) -> Result<Self> {
         let inner = Inner::new(cookie).await?;
@@ -43,7 +43,44 @@ impl Xplore {
 }
 
 ///! TODO: login / logout and cookie management
-impl Xplore {}
+impl Xplore {
+    pub async fn login(
+        &mut self,
+        username: String,
+        password: String,
+        email: Option<String>,
+        two_factor_secret: Option<String>,
+    ) -> Result<()> {
+        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
+            let mut auth = user_auth.clone();
+            auth.login(
+                &self.twitter_client.client,
+                &username,
+                &password,
+                email.as_deref(),
+                two_factor_secret.as_deref(),
+            )
+            .await?;
+
+            self.twitter_client.auth = Box::new(auth.clone());
+            Ok(())
+        } else {
+            Err(TwitterError::Auth("Invalid auth type".into()))
+        }
+    }
+
+    pub async fn logout() -> Result<bool> {
+        todo!()
+    }
+
+    pub async fn set_cookies(_cookies: Vec<String>) {
+        todo!()
+    }
+
+    pub async fn get_coookies() -> Result<Vec<String>> {
+        todo!()
+    }
+}
 
 ///! Profile's API collection
 impl Xplore {
