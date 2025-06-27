@@ -1,7 +1,7 @@
 <div align="center">
 
 # xplore   
-X/Twitter for Rust
+X for Rust
 
 [![Version](https://img.shields.io/crates/v/xplore)](https://crates.io/crates/xplore)
 ![Crates Downloads](https://img.shields.io/crates/d/xplore?logo=rust)
