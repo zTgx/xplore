@@ -1,14 +1,12 @@
 use {
-    crate::core::{
-        client::Xplore,
-        models::{
-            profile::Profile,
-            search::SearchMode,
-            timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
-            timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
-            Result,
-        },
+    crate::core::models::{
+        profile::Profile,
+        search::SearchMode,
+        timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+        timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
+        Result,
     },
+    crate::Xplore,
     lazy_static::lazy_static,
     reqwest::Method,
     serde::Deserialize,
@@ -54,7 +52,7 @@ pub struct SearchInstruction {
 }
 
 pub(crate) async fn get_search_timeline(
-    xyz: &Xplore,
+    xplore: &Xplore,
     query: &str,
     max_items: i32,
     search_mode: SearchMode,
@@ -139,7 +137,7 @@ pub(crate) async fn get_search_timeline(
 
     let url = format!("https://api.twitter.com/graphql/gkjsKepM6gl_HmFWoWKfgg/SearchTimeline?{}", query_string);
 
-    let (res, _) = xyz.inner.rpc.send_request::<SearchTimeline>(&url, Method::GET, None).await?;
+    let (res, _) = xplore.inner.rpc.send_request::<SearchTimeline>(&url, Method::GET, None).await?;
 
     Ok(res)
 }

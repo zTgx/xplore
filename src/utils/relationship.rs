@@ -1,19 +1,19 @@
 use {
     crate::{
-        core::client::Xplore,
         core::models::{profile::Profile, rel::RelationshipTimeline, timeline_v1::QueryProfilesResponse, Result},
         utils::home::{get_follower_timeline, get_following_timeline},
+        Xplore,
     },
     chrono::{DateTime, Utc},
 };
 
 pub async fn fetch_profile_following(
-    xyz: &Xplore,
+    xplore: &Xplore,
     user_id: &str,
     max_profiles: i32,
     cursor: Option<String>,
 ) -> Result<QueryProfilesResponse> {
-    let timeline = get_following_timeline(xyz, user_id, max_profiles, cursor).await?;
+    let timeline = get_following_timeline(xplore, user_id, max_profiles, cursor).await?;
     Ok(parse_relationship_timeline(&timeline))
 }
 

@@ -1,12 +1,17 @@
-use crate::{core::auth::UserAuth, core::error::XploreError, core::models::Result};
-use reqwest::{
-    header::{HeaderMap, HeaderValue},
-    multipart::Form,
-    Client, Method,
+use {
+    crate::{
+        core::{auth::UserAuth, error::XploreError, models::Result},
+        Xplore,
+    },
+    reqwest::{
+        header::{HeaderMap, HeaderValue},
+        multipart::Form,
+        Client, Method,
+    },
+    serde::de::DeserializeOwned,
+    serde_json::Value,
+    std::time::Duration,
 };
-use serde::de::DeserializeOwned;
-use serde_json::Value;
-use std::time::Duration;
 
 pub struct InnerRpc {
     pub client: Client,
@@ -25,6 +30,21 @@ impl InnerRpc {
         auth.set_from_cookie_string(cookie).await?;
 
         Ok(Self { client, auth })
+    }
+}
+
+impl InnerRpc {
+    pub async fn login(
+        &mut self,
+        xplore: &Xplore,
+        username: &str,
+        password: &str,
+        email: Option<&str>,
+        two_factor_secret: Option<&str>,
+    ) -> Result<bool> {
+        let _ = self.auth.login(xplore, username, password, email, two_factor_secret);
+
+        Ok(true)
     }
 }
 

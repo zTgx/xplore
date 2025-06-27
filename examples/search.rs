@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use std::env;
-use xplore::{search::SearchMode, ISearch, Xplore};
+use xplore::{SearchMode, Xplore};
 
 #[tokio::main]
 async fn main() {
