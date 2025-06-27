@@ -1,8 +1,6 @@
 use {
     crate::{
-        api::{profile::IProfile, tweet::ITweet},
         core::{
-            client::Xplore,
             error::XploreError,
             models::{
                 endpoints::Endpoints,
@@ -14,89 +12,86 @@ use {
                 Result,
             },
         },
+        Xplore,
     },
-    async_trait::async_trait,
     reqwest::Method,
     serde_json::{json, Value},
 };
 
-#[async_trait]
-impl ITweet for Xplore {
-    async fn post_tweet(
-        &self,
-        text: &str,
-        reply_to: Option<&str>,
-        media_data: Option<Vec<(Vec<u8>, String)>>,
-    ) -> Result<Value> {
-        create_tweet_request(self, text, reply_to, media_data).await
-    }
+pub async fn post_tweet(
+    xplore: &Xplore,
+    text: &str,
+    reply_to: Option<&str>,
+    media_data: Option<Vec<(Vec<u8>, String)>>,
+) -> Result<Value> {
+    create_tweet_request(xplore, text, reply_to, media_data).await
+}
 
-    async fn read_tweet(&self, tweet_id: &str) -> Result<Tweet> {
-        get_tweet(self, tweet_id).await
-    }
+pub async fn read_tweet(xplore: &Xplore, tweet_id: &str) -> Result<Tweet> {
+    get_tweet(xplore, tweet_id).await
+}
 
-    async fn retweet(&self, tweet_id: &str) -> Result<TweetRetweetResponse> {
-        let value = retweet(self, tweet_id).await?;
-        let res = serde_json::from_value(value)?;
+pub async fn retweet(xplore: &Xplore, tweet_id: &str) -> Result<TweetRetweetResponse> {
+    let value = retweet_(xplore, tweet_id).await?;
+    let res = serde_json::from_value(value)?;
 
-        Ok(res)
-    }
+    Ok(res)
+}
 
-    async fn like_tweet(&self, tweet_id: &str) -> Result<Value> {
-        let value = like_tweet(self, tweet_id).await?;
-        Ok(value)
-    }
+pub async fn like_tweet(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
+    let value = like_tweet_(xplore, tweet_id).await?;
+    Ok(value)
+}
 
-    async fn get_user_tweets(&self, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {
-        let url = format!("https://api.twitter.com/2/users/{}/tweets", user_id);
-        let body = json!({
-            "max_results": limit,
-            "tweet.fields": "created_at,author_id,conversation_id,public_metrics"
-        });
+pub async fn get_user_tweets(xplore: &Xplore, user_id: &str, limit: usize) -> Result<Vec<Tweet>> {
+    let url = format!("https://api.twitter.com/2/users/{}/tweets", user_id);
+    let body = json!({
+        "max_results": limit,
+        "tweet.fields": "created_at,author_id,conversation_id,public_metrics"
+    });
 
-        let (v, _) = self.inner.rpc.send_request::<Vec<Tweet>>(&url, Method::GET, Some(body)).await?;
-        Ok(v)
-    }
+    let (v, _) = xplore.inner.rpc.send_request::<Vec<Tweet>>(&url, Method::GET, Some(body)).await?;
+    Ok(v)
+}
 
-    async fn send_quote_tweet(
-        &self,
-        text: &str,
-        quoted_tweet_id: &str,
-        media_data: Option<Vec<(Vec<u8>, String)>>,
-    ) -> Result<Value> {
-        create_quote_tweet(self, text, quoted_tweet_id, media_data).await
-    }
+pub async fn send_quote_tweet(
+    xplore: &Xplore,
+    text: &str,
+    quoted_tweet_id: &str,
+    media_data: Option<Vec<(Vec<u8>, String)>>,
+) -> Result<Value> {
+    create_quote_tweet(xplore, text, quoted_tweet_id, media_data).await
+}
 
-    async fn fetch_tweets_and_replies(
-        &self,
-        username: &str,
-        max_tweets: i32,
-        cursor: Option<&str>,
-    ) -> Result<QueryTweetsResponse> {
-        fetch_tweets_and_replies_(self, username, max_tweets, cursor).await
-    }
+pub async fn fetch_tweets_and_replies(
+    xplore: &Xplore,
+    username: &str,
+    max_tweets: i32,
+    cursor: Option<&str>,
+) -> Result<QueryTweetsResponse> {
+    fetch_tweets_and_replies_(xplore, username, max_tweets, cursor).await
+}
 
-    async fn fetch_tweets_and_replies_by_user_id(
-        &self,
-        user_id: &str,
-        max_tweets: i32,
-        cursor: Option<&str>,
-    ) -> Result<QueryTweetsResponse> {
-        fetch_tweets_and_replies_by_user_id(self, user_id, max_tweets, cursor).await
-    }
+pub async fn fetch_tweets_and_replies_by_user_id(
+    xplore: &Xplore,
+    user_id: &str,
+    max_tweets: i32,
+    cursor: Option<&str>,
+) -> Result<QueryTweetsResponse> {
+    fetch_tweets_and_replies_by_user_id_(xplore, user_id, max_tweets, cursor).await
+}
 
-    async fn fetch_list_tweets(&self, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
-        fetch_list_tweets(self, list_id, max_tweets, cursor).await
-    }
+pub async fn fetch_list_tweets(xplore: &Xplore, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
+    fetch_list_tweets_(xplore, list_id, max_tweets, cursor).await
+}
 
-    async fn create_long_tweet(
-        &self,
-        text: &str,
-        reply_to: Option<&str>,
-        media_ids: Option<Vec<String>>,
-    ) -> Result<Value> {
-        create_long_tweet(self, text, reply_to, media_ids).await
-    }
+pub async fn create_long_tweet(
+    xplore: &Xplore,
+    text: &str,
+    reply_to: Option<&str>,
+    media_ids: Option<Vec<String>>,
+) -> Result<Value> {
+    create_long_tweet_(xplore, text, reply_to, media_ids).await
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +135,7 @@ pub async fn fetch_tweets_and_replies_(
     Ok(parsed_response)
 }
 
-pub async fn fetch_tweets_and_replies_by_user_id(
+pub async fn fetch_tweets_and_replies_by_user_id_(
     xplore: &Xplore,
     user_id: &str,
     max_tweets: i32,
@@ -156,7 +151,12 @@ pub async fn fetch_tweets_and_replies_by_user_id(
     Ok(parsed_response)
 }
 
-pub async fn fetch_list_tweets(xplore: &Xplore, list_id: &str, max_tweets: i32, cursor: Option<&str>) -> Result<Value> {
+pub async fn fetch_list_tweets_(
+    xplore: &Xplore,
+    list_id: &str,
+    max_tweets: i32,
+    cursor: Option<&str>,
+) -> Result<Value> {
     let mut variables = json!({
         "listId": list_id,
         "count": max_tweets.min(200)
@@ -218,7 +218,7 @@ pub async fn create_quote_tweet(
     Ok(v)
 }
 
-pub async fn like_tweet(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
+pub async fn like_tweet_(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
     let url = "https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet";
     let body = Some(json!({
         "variables": {
@@ -230,7 +230,7 @@ pub async fn like_tweet(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
     Ok(value)
 }
 
-pub async fn retweet(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
+pub async fn retweet_(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
     let url = "https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet";
     let body = Some(json!({
         "variables": {
@@ -242,7 +242,7 @@ pub async fn retweet(xplore: &Xplore, tweet_id: &str) -> Result<Value> {
     Ok(value)
 }
 
-pub async fn create_long_tweet(
+pub async fn create_long_tweet_(
     xplore: &Xplore,
     text: &str,
     reply_to: Option<&str>,

@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use std::env;
-use xplore::{IProfile, ITweet, Xplore};
+use xplore::Xplore;
 
 #[tokio::main]
 async fn main() {

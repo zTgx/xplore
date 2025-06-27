@@ -1,12 +1,10 @@
 use {
-    crate::core::{
-        client::Xplore,
-        models::{
-            home::{HomeTimelineResponse, TimelineInstruction},
-            rel::RelationshipTimeline,
-            Result,
-        },
+    crate::core::models::{
+        home::{HomeTimelineResponse, TimelineInstruction},
+        rel::RelationshipTimeline,
+        Result,
     },
+    crate::Xplore,
     reqwest::Method,
     serde_json::{json, Value},
 };
