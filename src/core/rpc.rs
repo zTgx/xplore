@@ -1,5 +1,8 @@
 use {
-    crate::{core::auth::UserAuth, core::error::XploreError, core::models::Result},
+    crate::{
+        core::{auth::UserAuth, error::XploreError, models::Result},
+        Xplore,
+    },
     reqwest::{
         header::{HeaderMap, HeaderValue},
         multipart::Form,
@@ -27,6 +30,21 @@ impl InnerRpc {
         auth.set_from_cookie_string(cookie).await?;
 
         Ok(Self { client, auth })
+    }
+}
+
+impl InnerRpc {
+    pub async fn login(
+        &mut self,
+        xplore: &Xplore,
+        username: &str,
+        password: &str,
+        email: Option<&str>,
+        two_factor_secret: Option<&str>,
+    ) -> Result<bool> {
+        let _ = self.auth.login(xplore, username, password, email, two_factor_secret);
+
+        Ok(true)
     }
 }
 

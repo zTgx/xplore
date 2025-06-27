@@ -42,31 +42,15 @@ impl Xplore {
     }
 }
 
-///! TODO: login / logout and cookie management
 impl Xplore {
     pub async fn login(
         &mut self,
-        username: String,
-        password: String,
-        email: Option<String>,
-        two_factor_secret: Option<String>,
-    ) -> Result<()> {
-        if let Some(user_auth) = self.twitter_client.auth.as_any().downcast_ref::<TwitterUserAuth>() {
-            let mut auth = user_auth.clone();
-            auth.login(
-                &self.twitter_client.client,
-                &username,
-                &password,
-                email.as_deref(),
-                two_factor_secret.as_deref(),
-            )
-            .await?;
-
-            self.twitter_client.auth = Box::new(auth.clone());
-            Ok(())
-        } else {
-            Err(TwitterError::Auth("Invalid auth type".into()))
-        }
+        username: &str,
+        password: &str,
+        email: Option<&str>,
+        two_factor_secret: Option<&str>,
+    ) -> Result<bool> {
+        todo!()
     }
 
     pub async fn logout() -> Result<bool> {
