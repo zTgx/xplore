@@ -1,5 +1,6 @@
-use std::collections::HashMap;
-use urlencoding;
+#![allow(dead_code)]
+
+use {std::collections::HashMap, urlencoding};
 
 // Constants for default options matching TypeScript
 pub const DEFAULT_EXPANSIONS: &[&str] = &[

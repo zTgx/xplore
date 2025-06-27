@@ -26,179 +26,46 @@ X for Rust
 xplore = "0.1"
 ```
 
-## Quick start
+## Usage
+Two method to authenticate with Cookie:
+* By using `login`
 ```rust
-use dotenv::dotenv;
-use std::env;
-use xplore::{IProfile, Xplore};
+let mut xplore = Xplore::new(None).await.unwrap();
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-
-    let xplore = Xplore::new(&cookie).await.unwrap();
-    let user_id = xplore.get_user_id("elonmusk").await.unwrap();
-    println!("user id: {user_id}");
-}
+xplore.login(username, password, email, two_factor_secret).await;
 ```
 
-### Get screen name's profile
+OR
 
+* By using `set_cookie`
+```rust
+let mut xplore = Xplore::new(None).await.unwrap();
+
+let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
+xplore.set_cookie(&cookie).await;
+```
+
+--- 
+
+### A quick start
 ```rust
 use dotenv::dotenv;
 use std::env;
-use xplore::{IProfile, Xplore};
+use xplore::Xplore;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
 
+    let mut xplore = Xplore::new(None).await.unwrap();
+
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
-    
-    let screen_name = "elonmusk"; // Replace with the desired screen name
+    xplore.set_cookie(&cookie).await;
+
+    let screen_name = "zTgx5"; // Replace with the desired screen name
     println!("Getting profile for: {screen_name}");
-    let profile = get_profile(&xplore, screen_name)
-        .await;
+    let profile = xplore.get_profile(screen_name).await.expect("Failed to get profile");
     println!("Profile: {profile:#?}");
-}
-
-async fn get_profile(xplore: &Xplore, screen_name: &str) -> xplore::core::models::profile::Profile {
-    // This function retrieves the profile of a user by their screen name.
-    // It uses the Xplore instance to call the get_profile method.
-    // The screen_name parameter is the user's handle on the platform.
-    // The function returns a Profile object containing the user's profile information.
-    let profile = xplore.get_profile(screen_name)
-        .await
-        .expect("Failed to get profile");
-
-    profile
-}
-```
-
-### Get screen name's user ID
-```rust
-use dotenv::dotenv;
-use std::env;
-use xplore::{IProfile, Xplore};
-
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
-    
-    let screen_name = "elonmusk"; // Replace with the desired screen name
-    println!("Getting profile for: {screen_name}");
-    let user_id = get_user_id(&xplore, screen_name)
-        .await;
-    println!("{screen_name}'s User ID: {user_id:?}");
-}
-
-async fn get_user_id(xplore: &Xplore, screen_name: &str) -> String {
-    // This function retrieves the user ID of a user by their screen name.
-    // It uses the Xplore instance to call the get_user_id method.
-    // The screen_name parameter is the user's handle on the platform.
-    // The function returns a String containing the user's ID.
-    let user_id = xplore.get_user_id(screen_name)
-        .await
-        .expect("Failed to get profile by ID");
-
-        user_id
-}
-```
-
-### Get pinned Tweet content
-```rust
-use dotenv::dotenv;
-use std::env;
-use xplore::{IProfile, Xplore, ITweet};
-
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
-    
-    // Screen name of the user whose tweets we want to fetch
-    let screen_name = "elonmusk"; // Replace with the desired screen name
-    println!("Getting tweets for: {screen_name}");
-
-    // Fetching the user profile
-    let user_profile = xplore.get_profile(screen_name).await.unwrap();
-
-    // Fetching the user's pinned tweets by twitter ID
-    let tweet = xplore.read_tweet(&user_profile.pinned_tweet_id.unwrap()).await.unwrap();
-
-    // Displaying the tweet details
-    println!("Pinned Tweet ID: {:#?}", tweet.id);
-    println!("Pinned Tweet Text: {:#?}", tweet.text);
-}
-```
-
-### Search Tweet
-```rust
-use dotenv::dotenv;
-use std::env;
-use xplore::{search::SearchMode, ISearch, Xplore};
-
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
-
-    // Search for tweets by the user
-    let tweets_response = xplore
-        .search_tweets("The Democratic Party", 2, SearchMode::Latest, None)
-        .await
-        .expect("Failed to search tweets");
-
-    for tweet in tweets_response.tweets {
-        println!("Tweet ID: {:#?}, Text: {:#?}", tweet.id, tweet.text);
-    }
-}
-```
-
-### Get Following and followers
-```rust
-use dotenv::dotenv;
-use std::env;
-use xplore::{IRel, Xplore};
-
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-
-    let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
-
-    // Get the list of users that the authenticated user is following
-    let user_id = "1222365222934962177"; // Example user ID (Twitter's @elonmusk)
-
-    let following_response = xplore.following(user_id, 1, None).await.expect("Failed to get following list");
-
-    println!("Following count: {}", following_response.1.unwrap_or("No next cursor".to_string()));
-
-    // Print the usernames of the profiles that the user is following
-    println!("Following profiles:");
-    for profile in following_response.0 {
-        println!("Following: {:#?}", profile.username);
-    }
-
-    // Get the list of users that are following the authenticated user
-    let followers_response = xplore.followers(user_id, 1, None).await.expect("Failed to get followers list");
-    println!("Followers count: {}", followers_response.1.unwrap_or("No next cursor".to_string()));
-    // Print the usernames of the profiles that are following the user
-    println!("Followers profiles:");
-    for profile in followers_response.0 {
-        println!("Follower: {:#?}", profile.username);
-    }
 }
 ```
 
