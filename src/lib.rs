@@ -82,6 +82,25 @@ impl Xplore {
 
 ///! Login's API collection
 impl Xplore {
+    ///! Login Method
+    ///
+    /// Authenticates a user with the provided credentials.
+    ///
+    /// # Arguments
+    /// * `username` - The username of the user attempting to log in.
+    /// * `password` - The password of the user attempting to log in.
+    /// * `email` - Optional email address for additional authentication (if required by the service).
+    /// * `two_factor_secret` - Optional two-factor authentication secret (if 2FA is enabled).
+    ///
+    /// # Returns
+    /// * `Result<bool>` - Returns `Ok(true)` if login was successful, or an error if authentication failed.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Invalid credentials were provided
+    /// - Two-factor authentication failed
+    /// - Network error occurred during authentication
+    /// - Server rejected the login request
     pub async fn login(
         &mut self,
         username: &str,
@@ -94,16 +113,52 @@ impl Xplore {
         Ok(true)
     }
 
+    ///! Logout Method
+    ///
+    /// Terminates the current user session.
+    ///
+    /// # Returns
+    /// * `Result<bool>` - Returns `Ok(true)` if logout was successful, or an error if logout failed.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - No active session was found
+    /// - Network error occurred during logout
+    /// - Server rejected the logout request
     pub async fn logout(&mut self) -> Result<bool> {
         self.auth.logout().await;
 
         Ok(true)
     }
 
-    pub async fn set_cookie(&mut self, cookies: &str) {
-        let _ = self.auth.set_from_cookie_string(cookies).await;
+    ///! Set Cookie Method
+    ///
+    /// Sets the authentication cookie from a raw cookie string.
+    ///
+    /// # Arguments
+    /// * `cookie` - The raw cookie string containing authentication information.
+    ///
+    /// # Returns
+    /// This method does not return a value, but may fail silently if the cookie is invalid.
+    ///
+    /// # Errors
+    /// Errors may occur internally during cookie parsing and validation, but are currently ignored.
+    pub async fn set_cookie(&mut self, cookie: &str) {
+        let _ = self.auth.set_from_cookie_string(cookie).await;
     }
 
+    ///! Get Cookie Method
+    ///
+    /// Retrieves the current authentication cookie as a string.
+    ///
+    /// # Returns
+    /// * `Result<String>` - Returns `Ok(String)` containing the cookie if available, or an error if the cookie could not be retrieved.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - No active session exists
+    /// - Cookie could not be serialized to string
+    /// - Network error occurred during cookie retrieval
     pub async fn get_cookie(&mut self) -> Result<String> {
         self.auth.get_cookie_string().await
     }

@@ -1,20 +1,22 @@
 use dotenv::dotenv;
 use std::env;
-use xplore::Xplore;
+use xplore::{profile::Profile, Xplore};
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
 
+    let mut xplore = Xplore::new(None).await.unwrap();
+
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
+    xplore.set_cookie(&cookie).await;
 
     let screen_name = "elonmusk"; // Replace with the desired screen name
     println!("Getting profile for: {screen_name}");
-    let profile = get_profile(&xplore, screen_name).await;
+    let profile = get_profile(&mut xplore, screen_name).await;
     println!("Profile: {profile:#?}");
 
-    let user_id = get_user_id(&xplore, screen_name).await;
+    let user_id = get_user_id(&mut xplore, screen_name).await;
     println!("{screen_name}'s User ID: {user_id:?}");
 
     // Getting profile for: elonmusk
@@ -52,7 +54,7 @@ async fn main() {
     // elonmusk's User ID: "44196397"
 }
 
-async fn get_profile(xplore: &Xplore, screen_name: &str) -> xplore::core::models::profile::Profile {
+async fn get_profile(xplore: &mut Xplore, screen_name: &str) -> Profile {
     // This function retrieves the profile of a user by their screen name.
     // It uses the Xplore instance to call the get_profile method.
     // The screen_name parameter is the user's handle on the platform.
@@ -62,7 +64,7 @@ async fn get_profile(xplore: &Xplore, screen_name: &str) -> xplore::core::models
     profile
 }
 
-async fn get_user_id(xplore: &Xplore, screen_name: &str) -> String {
+async fn get_user_id(xplore: &mut Xplore, screen_name: &str) -> String {
     // This function retrieves the user ID of a user by their screen name.
     // It uses the Xplore instance to call the get_user_id method.
     // The screen_name parameter is the user's handle on the platform.

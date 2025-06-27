@@ -6,8 +6,10 @@ use xplore::Xplore;
 async fn main() {
     dotenv().ok();
 
+    let mut xplore = Xplore::new(None).await.unwrap();
+
     let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
-    let xplore = Xplore::new(&cookie).await.unwrap();
+    xplore.set_cookie(&cookie).await;
 
     let screen_name = "zTgx5"; // Replace with the desired screen name
     println!("Getting profile for: {screen_name}");
