@@ -8,6 +8,7 @@ pub mod utils;
 
 mod api;
 pub mod profile;
+pub mod search;
 
 ///! Export
 pub use core::models::search::SearchMode;
@@ -23,7 +24,7 @@ use {
             Result,
         },
         profile::{get_profile, get_user_id, Profile},
-        services::{home, relationship, search, tweet},
+        services::{home, relationship, tweet},
     },
     serde_json::Value,
 };

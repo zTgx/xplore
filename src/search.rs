@@ -1,17 +1,45 @@
 use {
-    crate::core::models::{
-        profile::Profile,
-        search::SearchMode,
-        timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
-        timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
-        Result,
+    crate::{
+        api,
+        core::{
+            auth::UserAuth,
+            models::{
+                search::SearchMode,
+                timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+                timeline_v2::{parse_legacy_tweet, SearchEntryRaw},
+                Result,
+            },
+        },
+        Profile,
     },
-    crate::Xplore,
     lazy_static::lazy_static,
     reqwest::Method,
     serde::Deserialize,
     serde_json::json,
 };
+
+pub async fn search_tweets(
+    auth: &mut UserAuth,
+    query: &str,
+    max_tweets: i32,
+    search_mode: SearchMode,
+    cursor: Option<String>,
+) -> Result<QueryTweetsResponse> {
+    let timeline = get_search_timeline(auth, query, max_tweets, search_mode, cursor).await?;
+
+    Ok(parse_search_timeline_tweets(&timeline))
+}
+
+pub async fn search_profiles(
+    auth: &mut UserAuth,
+    query: &str,
+    max_profiles: i32,
+    cursor: Option<String>,
+) -> Result<QueryProfilesResponse> {
+    let timeline = get_search_timeline(auth, query, max_profiles, SearchMode::Users, cursor).await?;
+
+    Ok(parse_search_timeline_users(&timeline))
+}
 
 lazy_static! {
     static ref EMPTY_INSTRUCTIONS: Vec<SearchInstruction> = Vec::new();
@@ -52,7 +80,7 @@ pub struct SearchInstruction {
 }
 
 pub(crate) async fn get_search_timeline(
-    xplore: &Xplore,
+    auth: &mut UserAuth,
     query: &str,
     max_items: i32,
     search_mode: SearchMode,
@@ -137,7 +165,7 @@ pub(crate) async fn get_search_timeline(
 
     let url = format!("https://api.twitter.com/graphql/gkjsKepM6gl_HmFWoWKfgg/SearchTimeline?{}", query_string);
 
-    let (res, _) = xplore.inner.rpc.send_request::<SearchTimeline>(&url, Method::GET, None).await?;
+    let (res, _) = api::send_request::<SearchTimeline>(auth, &url, Method::GET, None).await?;
 
     Ok(res)
 }
