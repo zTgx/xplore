@@ -2,7 +2,6 @@ pub mod auth;
 pub mod constants;
 pub mod endpoints;
 pub mod home;
-pub mod profile;
 pub mod rel;
 pub mod search;
 pub mod timeline_v1;

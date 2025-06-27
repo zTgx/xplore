@@ -6,61 +6,65 @@ pub mod core;
 pub mod services;
 pub mod utils;
 
+mod api;
+pub mod profile;
+
 ///! Export
 pub use core::models::search::SearchMode;
 
+use crate::core::auth::UserAuth;
+
 use {
     crate::{
-        core::{
-            inner::Inner,
-            models::{
-                profile::Profile,
-                timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
-                timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
-                tweets::{Tweet, TweetRetweetResponse},
-                Result,
-            },
+        core::models::{
+            timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
+            timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
+            tweets::{Tweet, TweetRetweetResponse},
+            Result,
         },
-        services::{home, profile, relationship, search, tweet},
+        profile::{get_profile, get_user_id, Profile},
+        services::{home, relationship, search, tweet},
     },
     serde_json::Value,
 };
 
-///! TODO: refactor Xplore fields???
+///! TODO: update it later
+pub struct XploreOptions {}
+
 pub struct Xplore {
-    pub inner: Inner,
+    auth: UserAuth,
 }
 
 impl Xplore {
-    pub async fn new(cookie: &str) -> Result<Self> {
-        let inner = Inner::new(cookie).await?;
-
-        Ok(Self { inner })
+    pub async fn new(_options: Option<XploreOptions>) -> Result<Self> {
+        let auth = UserAuth::new().await?;
+        Ok(Self { auth })
     }
 }
 
+///! Login's API collection
 impl Xplore {
-    pub async fn login(
-        &mut self,
-        username: &str,
-        password: &str,
-        email: Option<&str>,
-        two_factor_secret: Option<&str>,
-    ) -> Result<bool> {
-        todo!()
-    }
+    // pub async fn login(
+    //     &mut self,
+    //     username: &str,
+    //     password: &str,
+    //     email: Option<&str>,
+    //     two_factor_secret: Option<&str>,
+    // ) -> Result<bool> {
+    //     todo!()
+    // }
 
-    pub async fn logout() -> Result<bool> {
-        todo!()
-    }
+    // pub async fn logout() -> Result<bool> {
+    //     todo!()
+    // }
 
-    pub async fn set_cookies(_cookies: Vec<String>) {
-        todo!()
-    }
+    // pub async fn set_cookies(_cookies: Vec<String>) {
+    //     todo!()
+    // }
 
-    pub async fn get_coookies() -> Result<Vec<String>> {
-        todo!()
-    }
+    // pub async fn get_coookies() -> Result<Vec<String>> {
+    //     todo!()
+    // }
 }
 
 ///! Profile's API collection
@@ -72,8 +76,8 @@ impl Xplore {
     /// * `Result<Profile>` - A result containing the user's profile if successful, or an error if not.
     /// # Errors
     /// Returns an error if the profile cannot be fetched, such as if the user does not exist or if there is a network issue.
-    pub async fn get_profile(&self, screen_name: &str) -> Result<Profile> {
-        profile::get_profile(&self, screen_name).await
+    pub async fn get_profile(&mut self, screen_name: &str) -> Result<Profile> {
+        get_profile(&mut self.auth, screen_name).await
     }
 
     ///! Fetches the user ID of a user by their screen name.
@@ -83,8 +87,8 @@ impl Xplore {
     /// * `Result<String>` - A result containing the user's ID if successful, or an error if not.
     /// # Errors
     /// Returns an error if the user ID cannot be fetched, such as if the user does not exist or if there is a network issue.
-    pub async fn get_user_id(&self, screen_name: &str) -> Result<String> {
-        profile::get_user_id(&self, screen_name).await
+    pub async fn get_user_id(&mut self, screen_name: &str) -> Result<String> {
+        get_user_id(&mut self.auth, screen_name).await
     }
 }
 

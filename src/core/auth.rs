@@ -1,5 +1,6 @@
 use {
     crate::{
+        api,
         core::{
             error::XploreError,
             models::{
@@ -14,7 +15,7 @@ use {
     cookie::CookieJar,
     reqwest::{
         header::{HeaderMap, HeaderValue},
-        Method,
+        Client, Method,
     },
     serde_json::{json, Value},
     std::{
@@ -22,6 +23,7 @@ use {
         io::{Read, Write},
         path::Path,
         sync::Arc,
+        time::Duration,
     },
     tokio::sync::Mutex,
     totp_rs::{Algorithm, TOTP},
@@ -30,6 +32,7 @@ use {
 
 #[derive(Clone)]
 pub struct UserAuth {
+    pub client: Client,
     bearer_token: String,
     guest_token: Option<String>,
     cookie_jar: Arc<Mutex<CookieJar>>,
@@ -38,7 +41,16 @@ pub struct UserAuth {
 
 impl UserAuth {
     pub async fn new() -> Result<Self> {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .cookie_store(true)
+            .build()
+            .map_err(XploreError::Network)?;
+
+        // auth.set_from_cookie_string(cookie).await?;
+
         Ok(Self {
+            client,
             bearer_token: BEARER_TOKEN.to_string(),
             guest_token: None,
             cookie_jar: Arc::new(Mutex::new(CookieJar::new())),
@@ -63,16 +75,15 @@ impl UserAuth {
 
         let url = "https://api.twitter.com/1.1/onboarding/task.json";
         let body = Some(json!(init_request));
-        let (response, _) = xplore.inner.rpc.send_request(url, Method::POST, body).await?;
+        let (response, _) = api::send_request(self, url, Method::POST, body).await?;
 
         Ok(response)
     }
 
-    async fn execute_flow_task(&self, xplore: &Xplore, request: FlowTaskRequest) -> Result<FlowResponse> {
+    async fn execute_flow_task(&mut self, xplore: &Xplore, request: FlowTaskRequest) -> Result<FlowResponse> {
         let url = "https://api.twitter.com/1.1/onboarding/task.json";
         let body = Some(json!(request));
-        let (flow_response, raw_response) =
-            xplore.inner.rpc.send_request::<FlowResponse>(url, Method::POST, body).await?;
+        let (flow_response, raw_response) = api::send_request::<FlowResponse>(self, url, Method::POST, body).await?;
 
         let mut cookie_jar = self.cookie_jar.lock().await;
         for cookie_header in raw_response.get_all("set-cookie") {
@@ -154,7 +165,7 @@ impl UserAuth {
         Ok(())
     }
 
-    async fn handle_js_instrumentation_subtask(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_js_instrumentation_subtask(&mut self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -168,7 +179,12 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_username_input(&self, xplore: &Xplore, flow_token: String, username: &str) -> Result<FlowResponse> {
+    async fn handle_username_input(
+        &mut self,
+        xplore: &Xplore,
+        flow_token: String,
+        username: &str,
+    ) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -191,7 +207,12 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_password_input(&self, xplore: &Xplore, flow_token: String, password: &str) -> Result<FlowResponse> {
+    async fn handle_password_input(
+        &mut self,
+        xplore: &Xplore,
+        flow_token: String,
+        password: &str,
+    ) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -206,7 +227,7 @@ impl UserAuth {
     }
 
     async fn handle_email_verification(
-        &self,
+        &mut self,
         xplore: &Xplore,
         flow_token: String,
         email: &str,
@@ -224,7 +245,7 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_account_duplication_check(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_account_duplication_check(&mut self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest {
             flow_token,
             subtask_inputs: vec![json!({
@@ -237,7 +258,12 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_two_factor_auth(&self, xplore: &Xplore, flow_token: String, secret: &str) -> Result<FlowResponse> {
+    async fn handle_two_factor_auth(
+        &mut self,
+        xplore: &Xplore,
+        flow_token: String,
+        secret: &str,
+    ) -> Result<FlowResponse> {
         let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret.as_bytes().to_vec())
             .map_err(|e| XploreError::Auth(format!("Failed to create TOTP: {}", e)))?;
 
@@ -258,7 +284,7 @@ impl UserAuth {
     }
 
     async fn handle_alternate_identifier(
-        &self,
+        &mut self,
         xplore: &Xplore,
         flow_token: String,
         email: &str,
@@ -276,7 +302,7 @@ impl UserAuth {
         self.execute_flow_task(xplore, request).await
     }
 
-    async fn handle_success_subtask(&self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
+    async fn handle_success_subtask(&mut self, xplore: &Xplore, flow_token: String) -> Result<FlowResponse> {
         let request = FlowTaskRequest { flow_token, subtask_inputs: vec![] };
         self.execute_flow_task(xplore, request).await
     }
@@ -291,7 +317,7 @@ impl UserAuth {
                 .map_err(|e| XploreError::Auth(e.to_string()))?,
         );
 
-        let (response, _) = xplore.inner.rpc.send_request::<Value>(url, Method::POST, None).await?;
+        let (response, _) = api::send_request::<Value>(self, url, Method::POST, None).await?;
 
         let guest_token = response
             .get("guest_token")
@@ -435,13 +461,13 @@ impl UserAuth {
         Ok(())
     }
 
-    pub async fn is_logged_in(&self, xplore: &Xplore) -> Result<bool> {
+    pub async fn is_logged_in(&mut self, xplore: &Xplore) -> Result<bool> {
         let mut headers = HeaderMap::new();
         self.install_headers(&mut headers).await?;
 
         let url = "https://api.twitter.com/1.1/account/verify_credentials.json";
 
-        let (response, _) = xplore.inner.rpc.send_request::<Value>(url, Method::GET, None).await?;
+        let (response, _) = api::send_request::<Value>(self, url, Method::GET, None).await?;
 
         if let Some(errors) = response.get("errors") {
             if let Some(errors_array) = errors.as_array() {
