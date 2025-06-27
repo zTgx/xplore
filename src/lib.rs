@@ -82,27 +82,31 @@ impl Xplore {
 
 ///! Login's API collection
 impl Xplore {
-    // pub async fn login(
-    //     &mut self,
-    //     username: &str,
-    //     password: &str,
-    //     email: Option<&str>,
-    //     two_factor_secret: Option<&str>,
-    // ) -> Result<bool> {
-    //     todo!()
-    // }
+    pub async fn login(
+        &mut self,
+        username: &str,
+        password: &str,
+        email: Option<&str>,
+        two_factor_secret: Option<&str>,
+    ) -> Result<bool> {
+        let _ = self.auth.login(username, password, email, two_factor_secret).await;
 
-    // pub async fn logout() -> Result<bool> {
-    //     todo!()
-    // }
+        Ok(true)
+    }
 
-    // pub async fn set_cookies(_cookies: Vec<String>) {
-    //     todo!()
-    // }
+    pub async fn logout(&mut self) -> Result<bool> {
+        self.auth.logout().await;
 
-    // pub async fn get_coookies() -> Result<Vec<String>> {
-    //     todo!()
-    // }
+        Ok(true)
+    }
+
+    pub async fn set_cookie(&mut self, cookies: &str) {
+        let _ = self.auth.set_from_cookie_string(cookies).await;
+    }
+
+    pub async fn get_cookie(&mut self) -> Result<String> {
+        self.auth.get_cookie_string().await
+    }
 }
 
 ///! Profile's API collection
