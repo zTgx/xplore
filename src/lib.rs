@@ -23,6 +23,7 @@ use {
         search::SearchMode,
         timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
         timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
+        trend::get_trend,
         tweets::{
             create_long_tweet, fetch_list_tweets, fetch_tweets_and_replies, fetch_tweets_and_replies_by_user_id,
             get_user_tweets, like_tweet, post_tweet, read_tweet, retweet, send_quote_tweet, Tweet,
@@ -471,5 +472,28 @@ impl Xplore {
         media_ids: Option<Vec<String>>,
     ) -> Result<Value> {
         create_long_tweet(self, text, reply_to, media_ids).await
+    }
+}
+
+///! Trend's API collection
+impl Xplore {
+    ///! Fetches the current trending topics.
+    ///
+    /// Retrieves a list of current trending topics from the platform.
+    ///
+    /// # Arguments
+    /// * `self` - The mutable reference to the Xplore instance (implicitly passed).
+    ///
+    /// # Returns
+    /// * `Result<Vec<String>>` - A result containing a vector of trend names if successful,
+    ///   or an error if the trends cannot be fetched.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - The request to fetch trends fails (network or API error)
+    /// - The response cannot be parsed into a list of strings
+    /// - There is an authentication issue preventing access to trends
+    pub async fn get_trend(&mut self) -> Result<Vec<String>> {
+        get_trend(&mut self.auth).await
     }
 }
