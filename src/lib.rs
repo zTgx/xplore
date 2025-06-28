@@ -1,22 +1,25 @@
-//! Xplore - A Twitter API client for Rust
+//! Xplore - A X API client for Rust
 //!
-//! This crate provides a convenient way to interact with Twitter's API.
+//! This crate provides a convenient way to interact with X's undocumented API.
 
 mod api;
 mod api_utils;
 mod auth;
 mod endpoints;
 pub mod profile;
+mod rate_limit;
 pub mod relationship;
 pub mod search;
 mod timeline_v1;
 mod timeline_v2;
+mod trend;
 pub mod tweets;
 
 use {
     crate::{
         auth::UserAuth,
         profile::{get_profile, get_user_id, Profile},
+        rate_limit::RateLimitStrategy,
         search::SearchMode,
         timeline_v1::{QueryProfilesResponse, QueryTweetsResponse},
         timeline_v2::QueryTweetsResponse as V2QueryTweetsResponse,
@@ -26,6 +29,7 @@ use {
             TweetRetweetResponse,
         },
     },
+    chrono::Duration,
     serde::Deserialize,
     serde_json::Value,
     thiserror::Error,
@@ -66,8 +70,26 @@ pub enum XploreError {
     Io(#[from] std::io::Error),
 }
 
-///! TODO: update it later
-pub struct XploreOptions {}
+/// Configuration options for the Xplore scraper.
+pub struct XploreOptions {
+    /// The rate limiting strategy to use when the scraper hits API limits.
+    pub rate_limit_strategy: Box<dyn RateLimitStrategy>,
+
+    /// Timeout for individual requests.
+    ///
+    /// Default: 30 seconds
+    pub request_timeout: Duration,
+
+    /// Maximum number of retries for failed requests.
+    ///
+    /// Default: 3
+    pub max_retries: u32,
+
+    /// Whether to automatically follow redirects.
+    ///
+    /// Default: true
+    pub follow_redirects: bool,
+}
 
 pub struct Xplore {
     auth: UserAuth,
