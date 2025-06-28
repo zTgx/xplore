@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use {
     crate::{Result, XploreError},
     async_trait::async_trait,
