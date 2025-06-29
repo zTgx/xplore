@@ -9,6 +9,7 @@ use {
     serde_json::json,
 };
 
+// TODO: debug???
 pub async fn get_trend(auth: &mut UserAuth) -> Result<Vec<String>> {
     let params = json!(
         {

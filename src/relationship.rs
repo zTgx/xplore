@@ -445,7 +445,6 @@ pub async fn unfollow(xplore: &mut Xplore, username: &str) -> Result<()> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///
 pub async fn fetch_profile_following(
     xplore: &mut Xplore,
     user_id: &str,
@@ -549,8 +548,6 @@ fn parse_relationship_timeline(timeline: &RelationshipTimeline) -> QueryProfiles
                         }
                     }
                 }
-
-                // println!("Processing instruction: {:?}", instruction);
             }
         }
     }

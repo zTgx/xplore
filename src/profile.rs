@@ -4,77 +4,11 @@ use {
     lazy_static::lazy_static,
     reqwest::Method,
     serde::{Deserialize, Serialize},
-    serde_json::{json, Value},
+    serde_json::json,
     std::collections::HashMap,
     std::sync::Arc,
     tokio::sync::Mutex,
 };
-
-fn get_screen_name_var(screen_name: &str) -> Value {
-    json!({
-        "screen_name": screen_name,
-        "withSafetyModeUserFields": true
-    })
-}
-
-fn get_screen_name_features() -> Value {
-    json!({
-        "hidden_profile_likes_enabled": false,
-        "hidden_profile_subscriptions_enabled": false,
-        "responsive_web_graphql_exclude_directive_enabled": true,
-        "verified_phone_label_enabled": false,
-        "subscriptions_verification_info_is_identity_verified_enabled": false,
-        "subscriptions_verification_info_verified_since_enabled": true,
-        "highlights_tweets_tab_ui_enabled": true,
-        "creator_subscriptions_tweet_preview_api_enabled": true,
-        "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
-        "responsive_web_graphql_timeline_navigation_enabled": true
-    })
-}
-
-fn field_toggles(toggle: bool) -> Value {
-    json!({
-        "withAuxiliaryUserLabels": toggle
-    })
-}
-
-pub fn screen_name_body(screen_name: &str) -> Option<Value> {
-    Some(json!({
-        "variables": get_screen_name_var(screen_name),
-        "features": get_screen_name_features(),
-        "fieldToggles": field_toggles(false)
-    }))
-}
-
-/// user id
-fn get_user_id_var(user_id: &str) -> Value {
-    json!({
-        "userId": user_id,
-        "withSafetyModeUserFields": true
-    })
-}
-
-fn get_user_id_features() -> Value {
-    json!({
-        "hidden_profile_subscriptions_enabled": true,
-        "rweb_tipjar_consumption_enabled": true,
-        "responsive_web_graphql_exclude_directive_enabled": true,
-        "verified_phone_label_enabled": false,
-        "highlights_tweets_tab_ui_enabled": true,
-        "responsive_web_twitter_article_notes_tab_enabled": true,
-        "subscriptions_feature_can_gift_premium": false,
-        "creator_subscriptions_tweet_preview_api_enabled": true,
-        "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
-        "responsive_web_graphql_timeline_navigation_enabled": true
-    })
-}
-
-pub fn user_id_body(user_id: &str) -> Option<Value> {
-    Some(json!({
-        "variables": get_user_id_var(user_id),
-        "features": get_user_id_features(),
-    }))
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profile {
@@ -153,7 +87,6 @@ impl From<(&LegacyUserRaw, Option<bool>)> for Profile {
             profile_image_url: user.profile_image_url_https.as_ref().map(|url| url.replace("_normal", "")),
             profile_banner_url: user.profile_banner_url.clone(),
             pinned_tweet_id: user.pinned_tweet_ids_str.as_ref().and_then(|ids| Some(ids.clone())),
-            // pinned_tweet_id: user.pinned_tweet_ids_str.as_ref().and_then(|ids| ids.first().cloned()),
         };
 
         // Set website URL from entities using functional chaining
@@ -261,15 +194,34 @@ pub struct TwitterApiErrorRaw {
 }
 
 pub async fn get_profile(auth: &mut UserAuth, screen_name: &str) -> Result<Profile> {
-    let body = screen_name_body(screen_name);
-    let response = api::send_request::<UserRaw>(
+    let body = json!({
+        "variables": json!({
+            "screen_name": screen_name,
+            "withSafetyModeUserFields": true
+        }),
+        "features": json!({
+            "hidden_profile_likes_enabled": false,
+            "hidden_profile_subscriptions_enabled": false,
+            "responsive_web_graphql_exclude_directive_enabled": true,
+            "verified_phone_label_enabled": false,
+            "subscriptions_verification_info_is_identity_verified_enabled": false,
+            "subscriptions_verification_info_verified_since_enabled": true,
+            "highlights_tweets_tab_ui_enabled": true,
+            "creator_subscriptions_tweet_preview_api_enabled": true,
+            "responsive_web_graphql_skip_user_profile_image_extensions_enabled": false,
+            "responsive_web_graphql_timeline_navigation_enabled": true
+        }),
+        "fieldToggles": json!({
+            "withAuxiliaryUserLabels": false
+        })
+    });
+    let (user_raw, _) = api::send_request::<UserRaw>(
         auth,
         "https://twitter.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName",
         Method::GET,
-        body,
+        Some(body),
     )
     .await?;
-    let user_raw = response.0;
 
     if let Some(errors) = user_raw.errors {
         if !errors.is_empty() {
@@ -277,15 +229,17 @@ pub async fn get_profile(auth: &mut UserAuth, screen_name: &str) -> Result<Profi
         }
     }
 
-    let user_raw_result = &user_raw.data.user.result;
-    let mut legacy = user_raw_result.legacy.clone();
-    let rest_id = user_raw_result.rest_id.clone();
-    let is_blue_verified = user_raw_result.is_blue_verified;
+    let user_legacy = &user_raw.data.user.result.legacy;
+    let rest_id = user_raw.data.user.result.rest_id.clone();
+    let is_blue_verified = user_raw.data.user.result.is_blue_verified;
+
+    let mut legacy = user_legacy.clone();
     legacy.user_id = rest_id;
-    if legacy.screen_name.is_none() || legacy.screen_name.as_ref().unwrap().is_empty() {
-        return Err(XploreError::Api(format!("Either {} does not exist or is private.", screen_name)));
+
+    match legacy.screen_name.as_deref() {
+        Some(name) if !name.is_empty() => Ok((&legacy, is_blue_verified).into()),
+        _ => Err(XploreError::Api(format!("Either {} does not exist or is private.", screen_name))),
     }
-    Ok((&legacy, is_blue_verified).into())
 }
 
 pub async fn get_user_id(auth: &mut UserAuth, screen_name: &str) -> Result<String> {
