@@ -45,6 +45,31 @@ let cookie = env::var("X_COOKIE_STRING").expect("X_COOKIE_STRING");
 xplore.set_cookie(&cookie).await;
 ```
 
+---
+> [!IMPORTANT]
+> **How to Get Request Cookie for Authentication**
+> 
+> **Steps to Retrieve Cookie:**
+> 1. Open Chrome Developer Tools:
+>    - Press `F12` or `Fn+F12` (depending on your keyboard)
+>    - Alternatively: Right-click → "Inspect" → "Network" tab
+> 
+> 2. Locate the Request:
+>    - Filter requests and select `user_flow.json`
+>    - Navigate to the "Headers" section
+> 
+> 3. Copy Cookie Value:
+>    - Under "Request Headers" → Find the "Cookie" field
+>    - Select and copy the entire cookie string
+> 
+> 4. Configure Environment:
+>    - Paste the copied value in your `.env` file:
+>      ```env
+>      X_COOKIE_STRING=your_copied_cookie_value_here
+>      ```
+> 
+> **Note:** This cookie is used for authentication - keep it secure and never commit to version control.
+
 --- 
 
 ### A quick start
@@ -71,3 +96,7 @@ async fn main() {
 
 ## Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=zTgx/xplore&type=Date)](https://www.star-history.com/#zTgx/xplore&Date)
+
+## License
+
+MIT
